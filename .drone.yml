@@ -7,7 +7,7 @@ pipeline:
 
   publish:
     image: byrnedo/alpine-curl
-    commands: [ 'curl -XPOST -H"content-type:application/json" "https://packagist.org/api/update-package?username=andrewmclagan&apiToken=2cmy6xog4hs0kogk4ccg" -d''{"repository":{"url":"https://github.com/ethical-jobs/ethical-jobs-foundation-php"}}''' ]
+    commands: [ 'curl -XPOST -H"content-type:application/json" "https://packagist.org/api/update-package?username=andrewmclagan&apiToken=2cmy6xog4hs0kogk4ccg" -d''{"repository":{"url":"https://github.com/ethical-jobs/ethical-jobs-elasticsearch"}}''' ]
     when:
       status: success
       event: tag
