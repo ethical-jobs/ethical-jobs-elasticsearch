@@ -5,7 +5,6 @@ namespace EthicalJobs\Elasticsearch\Hydrators;
 use Carbon\Carbon;
 use ReflectionMethod;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use EthicalJobs\Elasticsearch\Hydrator;
 
@@ -24,7 +23,7 @@ class EloquentHydrator implements Hydrator
      * @param App\Models\Interfaces\Indexable $indexable
      * @return Illuminate\Support\Collection
      */
-    public function hydrateFromResponse(array $response, $indexable): Collection
+    public function hydrateFromResponse(array $response, $indexable)
     {
         $indexables = [];
 

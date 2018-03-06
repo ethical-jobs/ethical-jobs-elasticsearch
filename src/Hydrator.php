@@ -2,8 +2,6 @@
 
 namespace EthicalJobs\Elasticsearch;
 
-use Illuminate\Support\Collection;
-
 /**
  * Document Hydrator Interface
  *
@@ -19,5 +17,5 @@ interface Hydrator
      * @param \App\Services\Elasticsearch\Indexable $indexable
      * @return \Illuminate\Support\Collection
      */
-    public function hydrateFromResponse(array $response, $indexable): Collection;
+    public function hydrateFromResponse(array $response, $indexable);
 }

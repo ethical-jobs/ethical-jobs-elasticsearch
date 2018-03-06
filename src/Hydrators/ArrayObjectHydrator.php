@@ -3,7 +3,6 @@
 namespace EthicalJobs\Elasticsearch\Hydrators;
 
 use ArrayObject;
-use Illuminate\Support\Collection;
 use EthicalJobs\Elasticsearch\Hydrator;
 
 /**
