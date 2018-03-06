@@ -5,6 +5,7 @@ namespace EthicalJobs\Elasticsearch\Hydrators;
 use Carbon\Carbon;
 use ReflectionMethod;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use EthicalJobs\Elasticsearch\Hydrator;
 

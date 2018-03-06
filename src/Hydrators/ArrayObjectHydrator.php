@@ -3,6 +3,7 @@
 namespace EthicalJobs\Elasticsearch\Hydrators;
 
 use ArrayObject;
+use Illuminate\Support\Collection;
 use EthicalJobs\Elasticsearch\Hydrator;
 
 /**
@@ -26,7 +27,7 @@ class ArrayObjectHydrator implements Hydrator
      * @param App\Services\Elasticsearch\Indexable $indexable
      * @return Illuminate\Support\Collection
      */
-    public function hydrateFromResponse(array $response, $indexable): Collection
+    public function hydrateFromResponse(array $response, $indexable)
     {
         $this->indexable = $indexable;
 
