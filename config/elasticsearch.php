@@ -90,6 +90,6 @@ return [
     */    
    
    'indexables' => [
-        App\User::class,
+        // App\User::class,
    ],
 ];
