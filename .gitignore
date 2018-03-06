@@ -1,0 +1,19 @@
+# paths
+vendor/
+node_modules/
+storage/logs/
+bootstrap/cache/
+.data
+
+# file types
+*.bak
+*.hhbc
+*.pid
+*.log
+.DS_Store
+
+# specific files
+.env
+!.env.testing
+invoices.csv
+testlog.out
