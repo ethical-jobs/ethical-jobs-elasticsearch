@@ -37,7 +37,9 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      */
     public function boot()
     {
-        $this->publishes([$this->configPath => config_path('elasticsearch.php')]);
+        $this->publishes([
+            $this->configPath => config_path('elasticsearch.php')
+        ], 'config');
 
         $this->configureObservers();
 
