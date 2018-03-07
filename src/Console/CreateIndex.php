@@ -56,6 +56,6 @@ class CreateIndex extends Command
     {
         $response = $this->index->create();
 
-        $this->info($response);
+        $this->info(implode("\n", $response ?? []));
     }
 }

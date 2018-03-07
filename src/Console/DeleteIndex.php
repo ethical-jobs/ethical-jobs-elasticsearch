@@ -56,6 +56,6 @@ class DeleteIndex extends Command
     {
         $response = $this->index->delete();
 
-        $this->info($response);
+        $this->info(implode("\n", $response ?? []));
     }
 }
