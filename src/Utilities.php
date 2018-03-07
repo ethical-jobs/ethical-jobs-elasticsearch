@@ -39,4 +39,18 @@ class Utilities
 
         return [];
     }
+
+    /**
+     * Determine if model is soft deletable
+     *
+     * @param mixed $entity
+     * @return bool
+     */
+    public static function isSoftDeletable($entity): bool
+    {
+        return in_array(
+            \Illuminate\Database\Eloquent\SoftDeletes::class, 
+            class_uses($entity)
+        );
+    }    
 }

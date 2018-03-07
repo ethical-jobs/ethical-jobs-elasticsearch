@@ -5,6 +5,7 @@ namespace EthicalJobs\Elasticsearch;
 use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
 use EthicalJobs\Elasticsearch\Index;
+use EthicalJobs\Elasticsearch\Console;
 use EthicalJobs\Elasticsearch\IndexSettings;
 
 /**
@@ -39,6 +40,8 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         $this->publishes([$this->configPath => config_path('elasticsearch.php')]);
 
         $this->configureObservers();
+
+        $this->registerCommands();
     }
 
      /**
@@ -130,4 +133,21 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             $indexable::observe(Observer::class);
         }
     }    
+
+    /**
+     * Register console commands
+     *
+     * @return Void
+     */
+    protected function registerCommands(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                Console\CreateIndex::class,
+                Console\DeleteIndex::class,
+                Console\FlushIndex::class,
+                Console\IndexDocuments::class,
+            ]);
+        }
+    }      
 }

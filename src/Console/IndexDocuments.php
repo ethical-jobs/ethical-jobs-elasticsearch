@@ -1,11 +1,13 @@
 <?php
 
-namespace EthicalJobs\Console;
+namespace EthicalJobs\Elasticsearch\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use EthicalJobs\Elasticsearch\DocumentIndexer;
+use EthicalJobs\Elasticsearch\Utilities;
+use EthicalJobs\Elasticsearch\Indexable;
 use EthicalJobs\Elasticsearch\Index;
 
 /**
@@ -31,13 +33,6 @@ class IndexDocuments extends Command
     protected $description = 'Indexes indexables into Elasticsearch';
 
     /**
-     * Elastic search index service
-     *
-     * @param \App\Services\Elasticsearch\DocumentIndexer
-     */
-    private $indexer;
-
-    /**
      * Elastic search index instance
      *
      * @param \EthicalJobs\Elasticsearch\Index 
@@ -45,11 +40,18 @@ class IndexDocuments extends Command
     private $index;    
 
     /**
+     * Elastic search index service
+     *
+     * @param \App\Services\Elasticsearch\DocumentIndexer
+     */
+    private $indexer;
+
+    /**
      * Resources to be indexed
      *
      * @param Array
      */
-    private $indexables = ['jobs','organisations','invoices'];
+    private $indexables = [];
 
     /**
      * Constructor
@@ -60,9 +62,11 @@ class IndexDocuments extends Command
      */
     public function __construct(Index $index, DocumentIndexer $indexer)
     {
+        parent::__construct();
+
         $this->indexer = $indexer;
 
-        $this->indexer = $index;
+        $this->index = $index;
     }
 
     /**
@@ -72,16 +76,14 @@ class IndexDocuments extends Command
      */
     public function handle()
     {
-        $resources = $this->option('resource') ? $this->option('resource') : $this->resources;
-
         if (Cache::has('ej:es:indexing')) {
             return $this->error('Indexing operation currently running.');
         }
 
         Cache::put('ej:es:indexing', microtime(true), 20);
 
-        foreach ($resources as $resource) {
-            $this->indexResource($resource);
+        foreach ($this->getIndexables() as $indexable) {
+            $this->index($indexable);
         }
 
         $this->info(">> Time elapsed ".(microtime(true)-Cache::get('ej:es:indexing'))." seconds");
@@ -90,93 +92,54 @@ class IndexDocuments extends Command
     }
 
     /**
-     * Indexes resources
+     * Indexes an indexable resource
      *
-     * @return Void
+     * @param  string $indexable
+     * @return void
      */
-    protected function indexResource(string $resource)
+    protected function index(string $indexable): void
     {
-        switch ($resource) {
-            case 'jobs':
-                return $this->indexJobs();
-            case 'organisations':
-                return $this->indexOrganisations();
-            case 'invoices':
-                return $this->indexInvoices();
+        $this->info('Indexing: '.$indexable);
+
+        $query = $this->getIndexableQuery($indexable);
+
+        $this->indexer
+            ->setLogging(true)
+            ->indexCollection($query);
+    }
+
+    /**
+     * Returns indexable query
+     *
+     * @param  string $indexable
+     * @return Illuminate\Database\Query\Builder
+     */
+    protected function getIndexableQuery(string $indexable)
+    {
+        $instance = new $indexable;
+
+        $relations = $instance->getDocumentRelations();
+
+        $query = $instance->with($relations);
+
+        if (Utilities::isSoftDeletable($indexable)) {
+            $query = $instance->withTrashed();
         }
-    }
+
+        return $query;    
+    }       
 
     /**
-     * Returns jobs for indexing
+     * Returns indexable entities
      *
-     * @return Illuminate\Database\Eloquent\Collection
+     * @return array
      */
-    protected function indexJobs()
+    protected function getIndexables(): array
     {
-        $this->info('Fetching jobs.');
-
-        $query = Models\Job::where('status', '!=', 'DRAFT')
-            ->withTrashed()
-            ->with((new Models\Job)->relations);
-
-        $this->index($query);
-    }
-
-    /**
-     * Returns organisations for indexing
-     *
-     * @return Illuminate\Database\Eloquent\Collection
-     */
-    protected function indexOrganisations()
-    {
-        $this->info('Fetching organisations.');
-
-        $query = Models\Organisation::withTrashed()
-            ->with((new Models\Organisation)->relations);
-
-        $this->index($query);
-    }
-
-    /**
-     * Returns invoices for indexing
-     *
-     * @return Illuminate\Database\Eloquent\Collection
-     */
-    protected function indexInvoices()
-    {
-        $this->info('Fetching invoices.');
-
-        $query = Models\Invoice::withTrashed()
-            ->with((new Models\Invoice)->relations);
-
-        $this->index($query);
-    }
-
-    /**
-     * Indexes a collection
-     *
-     * @return void
-     */
-    protected function index($query)
-    {
-       $this->info('Indexing.');
-
-        $this->indexer
-            ->setLogging(true)
-            ->indexCollection($query);
-    }
-
-    /**
-     * Indexes a collection
-     *
-     * @return void
-     */
-    protected function getIndexables($query)
-    {
-       $this->info('Indexing.');
-
-        $this->indexer
-            ->setLogging(true)
-            ->indexCollection($query);
+        if ($option = $this->option('indexables')) {
+            return is_array($option) ? $option : [$option];
+        }
+        
+        return $this->index->getSettings()->getIndexables();       
     }    
 }

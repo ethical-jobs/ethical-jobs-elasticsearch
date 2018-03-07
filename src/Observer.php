@@ -4,6 +4,7 @@ namespace EthicalJobs\Elasticsearch;
 
 use Illuminate\Database\Eloquent\Model;
 use EthicalJobs\Elasticsearch\Events;
+use EthicalJobs\Elasticsearch\Utilities;
 
 /**
  * Updates elastic search from eloquent model events.
@@ -54,9 +55,7 @@ class Observer
      */
     public function deleted(Model $indexable)
     {
-        $isSoftDelete = in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses($indexable));
-
-        if ($isSoftDelete) {
+        if (Utilities::isSoftDeletable($indexable)) {
             event(new Events\IndexableUpdated($indexable));    
         } else {
             event(new Events\IndexableDeleted($indexable));    

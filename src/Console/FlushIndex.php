@@ -1,6 +1,6 @@
 <?php
 
-namespace EthicalJobs\Console;
+namespace EthicalJobs\Elasticsearch\Console;
 
 use Illuminate\Console\Command;
 use Artisan;
@@ -28,26 +28,16 @@ class FlushIndex extends Command
     protected $description = 'Deletes, creates and then indexes documents';
 
     /**
-     * Constructor
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $this->artisan('ej:es:index-delete');
+        $this->call('ej:es:index-delete');
 
-        $this->artisan('ej:es:index-create');
+        $this->call('ej:es:index-create');
 
-        $this->artisan('ej:es:index');
+        $this->call('ej:es:index');
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace EthicalJobs\Console;
+namespace EthicalJobs\Elasticsearch\Console;
 
 use Illuminate\Console\Command;
 use EthicalJobs\Elasticsearch\Index;
@@ -30,21 +30,21 @@ class DeleteIndex extends Command
     /**
      * Elastic search index service
      *
-     * @param \App\Services\Elasticsearch\Index
+     * @param \EthicalJobs\Elasticsearch\Index
      */
     private $index;
 
     /**
      * Constructor
      *
-     * @param \App\Services\Elasticsearch\Index $index
+     * @param \EthicalJobs\Elasticsearch\Index $index
      * @return void
      */
     public function __construct(Index $index)
     {
-        $this->index = $index;
-
         parent::__construct();
+
+        $this->index = $index;
     }
 
     /**
@@ -56,6 +56,6 @@ class DeleteIndex extends Command
     {
         $response = $this->index->delete();
 
-        dump($response);
+        $this->info($response);
     }
 }
