@@ -135,7 +135,7 @@ class Index
             'index' => $this->getIndexName(),
             'body'  => [
                 'settings'  => $this->getSettings()->settings,
-                'mappings'  => $this->getSettings()->mappings,
+                'mappings'  => $this->getIndexMappings(),
             ],
         ]);
     }

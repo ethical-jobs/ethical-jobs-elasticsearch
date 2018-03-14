@@ -42,23 +42,7 @@ return [
     |
     */
    
-	'settings' => [
-            'analyzer' => [
-                'html_analyzer' => [
-                    'type'          => 'custom',
-                    'tokenizer'     => 'standard',
-                    'filter'        => ['lowercase'],
-                    'char_filter'   => ['html_strip'],
-                ],
-            ],
-            'normalizer' => [
-                'standard_lowercase' => [
-                    'type'          => 'custom',
-                    'char_filter'   => [],
-                    'filter'        => ['lowercase'],
-                ],
-            ],
-	],
+	'settings' => [],
 
     /*
     |--------------------------------------------------------------------------
@@ -69,16 +53,7 @@ return [
     |
     */
 
-	'mappings'	=> [
-        '_default_' => [
-            'properties' => [
-                'id'            => ['type' => 'integer'],
-                'created_at'    => ['type' => 'date' ],
-                'updated_at'    => ['type' => 'date' ],
-                'deleted_at'    => ['type' => 'date' ],
-            ],
-        ],
-	],
+	'mappings'	=> [],
 
     /*
     |--------------------------------------------------------------------------
