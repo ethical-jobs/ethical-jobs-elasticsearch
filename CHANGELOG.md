@@ -1,4 +1,4 @@
-# v1.2.1
+# v1.2.2
 
 - Removing default settings and mappings from config
 - Reduced indexing chunk-size to 300

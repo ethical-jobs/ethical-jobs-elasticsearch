@@ -98,26 +98,6 @@ class IndexTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
      * @test
      * @group Integration
      */
-    public function it_has_default_index_mappings()
-    {
-        $index = app()->make(Index::class);
-
-        $indexMappings = $index->getIndexMappings();
-
-        $this->assertEquals($indexMappings['_default_'], [
-            'properties' => [
-                'id'            => ['type' => 'integer'],
-                'created_at'    => ['type' => 'date' ],
-                'updated_at'    => ['type' => 'date' ],
-                'deleted_at'    => ['type' => 'date' ],
-            ],
-        ]);
-    }
-
-    /**
-     * @test
-     * @group Integration
-     */
     public function it_can_create_the_index()
     {
         $index = app()->make(Index::class);
@@ -139,7 +119,7 @@ class IndexTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
                 'index' => 'testing',
                 'body'  => [
                     'settings' => $index->getSettings()->settings,
-                    'mappings' => $index->getSettings()->mappings,
+                    'mappings' => $index->getIndexMappings(),
                 ],
             ])
             ->andReturn('success')
