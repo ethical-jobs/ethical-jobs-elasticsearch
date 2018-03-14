@@ -49,10 +49,10 @@ class DocumentIndexer
      *
      * @param \Elasticsearch\Client $elasticsearch
      * @param \App\Services\Elasticsearch\Index $index
-     * @param Integer $chunkSize
+     * @param int $chunkSize
      * @return void
      */
-    public function __construct(Client $elasticsearch, Index $index, $chunkSize = 450)
+    public function __construct(Client $elasticsearch, Index $index, $chunkSize = 300)
     {
         \DB::disableQueryLog();
 

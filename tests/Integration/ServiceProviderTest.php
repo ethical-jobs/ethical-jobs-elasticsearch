@@ -5,6 +5,7 @@ namespace EthicalJobs\Tests\Elasticsearch\Integration;
 use Elasticsearch\Client;
 use Illuminate\Support\Facades\Event;
 use EthicalJobs\Elasticsearch\Index;
+use EthicalJobs\Elasticsearch\DocumentIndexer;
 
 class ServiceProviderTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
 {
@@ -58,7 +59,18 @@ class ServiceProviderTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
         $this->assertEquals('testing', $index->getIndexName());
         $this->assertEquals(config('elasticsearch.settings'), $index->getSettings()->settings);
         $this->assertEquals(config('elasticsearch.mappings'), $index->getSettings()->mappings);
-    }          
+    }       
+
+    /**
+     * @test
+     * @group Unit
+     */
+    public function it_registers_document_indexer_instance()
+    {
+        $indexer = $this->app->make(DocumentIndexer::class);
+
+        $this->assertInstanceOf(DocumentIndexer::class, $indexer);
+    }         
 
     /**
      * @test

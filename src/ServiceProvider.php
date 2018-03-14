@@ -58,6 +58,8 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         $this->registerConnectionSingleton();
 
         $this->registerIndexSingleton();
+
+        $this->registerDocumentIndexer();
     }
 
     /**
@@ -68,8 +70,9 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     public function provides()
     {
         return [
-            Client::class,
             Index::class,
+            Client::class,
+            DocumentIndexer::class,
         ];
     }    
 
@@ -99,7 +102,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         });
     }
 
-     /**
+    /**
      * Register index instance
      *
      * @return void
@@ -118,7 +121,23 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
             return new Index($app[Client::class], $settings);
         });
-    }    
+    }   
+
+    /**
+     * Register document indexer
+     *
+     * @return void
+     */
+    protected function registerDocumentIndexer(): void
+    {
+        $this->app->bind(DocumentIndexer::class, function ($app) {
+            return new DocumentIndexer(
+                $app[Client::class],
+                $app[Index::class],
+                config('elasticsearch.indexing.chunk-size', null)
+            );
+        });
+    }       
 
     /**
      * Configure indexable observers
