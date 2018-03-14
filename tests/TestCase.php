@@ -12,6 +12,13 @@ abstract class TestCase extends \Orchestra\Testbench\TestCase
 	use InteractsWithElasticsearch;
 
 	/**
+	 * Enables elasticsearch observer
+	 *
+	 * @var bool
+	 */
+	protected $enableElasticsearchObserver = false;
+
+	/**
 	 * Setup the test environment.
      *
      * @return void
@@ -23,6 +30,8 @@ abstract class TestCase extends \Orchestra\Testbench\TestCase
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');        
 
 	    $this->withFactories(__DIR__.'/../database/factories');
+
+	    $this->withoutElasticsearchObserver();
 	}	
 
 	/**

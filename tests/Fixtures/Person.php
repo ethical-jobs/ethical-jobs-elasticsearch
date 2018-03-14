@@ -3,12 +3,24 @@
 namespace EthicalJobs\Tests\Elasticsearch\Fixtures;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use EthicalJobs\Elasticsearch\Indexable;
 use EthicalJobs\Elasticsearch\Document;
 
 class Person extends Model implements Indexable
 {
-    use Document;
+    use Document, SoftDeletes;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [ 
+        'first_name',    
+        'last_name',     
+        'email',         
+    ];    
 
     public function family()
     {

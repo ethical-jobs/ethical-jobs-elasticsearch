@@ -2,6 +2,7 @@
 
 namespace EthicalJobs\Elasticsearch;
 
+use Illuminate\Support\Facades\Event;
 use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
 use EthicalJobs\Elasticsearch\Index;
@@ -27,8 +28,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      *
      * @var string
      */
-    protected $configPath = __DIR__.'/../config/elasticsearch.php';
-
+    protected $configPath = __DIR__.'/../config/elasticsearch.php';  
 
     /**
      * Perform post-registration booting of services.
@@ -41,9 +41,9 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             $this->configPath => config_path('elasticsearch.php')
         ], 'config');
 
-        $this->configureObservers();
+        $this->bootObservers();
 
-        $this->registerCommands();
+        $this->bootCommands();
     }
 
      /**
@@ -125,23 +125,23 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      *
      * @return Void
      */
-    protected function configureObservers(): void
+    protected function bootObservers(): void
     {
         $indexables = resolve(Index::class)
             ->getSettings()
             ->getIndexables();
 
         foreach ($indexables as $indexable) {
-            $indexable::observe(Observer::class);
+            $indexable::observe(IndexableObserver::class);
         }
-    }    
+    }        
 
     /**
      * Register console commands
      *
      * @return Void
      */
-    protected function registerCommands(): void
+    protected function bootCommands(): void
     {
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -151,5 +151,5 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
                 Console\IndexDocuments::class,
             ]);
         }
-    }      
+    }        
 }

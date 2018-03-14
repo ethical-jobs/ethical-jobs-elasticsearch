@@ -19,6 +19,7 @@ class CreatePeopleTable extends Migration
             $table->string('last_name')->nullable();
             $table->string('email')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

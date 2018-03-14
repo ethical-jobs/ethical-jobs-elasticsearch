@@ -35,7 +35,7 @@ class ArrayObjectHydrator implements Hydrator
             return new Collection;
         }
 
-        $items = $response['hits']['hits'];
+        $items = $response['hits']['hits'] ?? [];
 
         $results = [];
 

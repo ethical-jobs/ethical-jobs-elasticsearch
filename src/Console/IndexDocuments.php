@@ -123,7 +123,7 @@ class IndexDocuments extends Command
         $query = $instance->with($relations);
 
         if (Utilities::isSoftDeletable($indexable)) {
-            $query = $instance->withTrashed();
+            $query->withTrashed();
         }
 
         return $query;    

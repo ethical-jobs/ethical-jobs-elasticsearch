@@ -82,7 +82,6 @@ class IndexDocumentsCommandTest extends \EthicalJobs\Tests\Elasticsearch\TestCas
             ->getSettings()
             ->getIndexables();
 
-
         $indexer = Mockery::mock(DocumentIndexer::class);
 
         foreach ($expectedIndexables as $indexable) {
