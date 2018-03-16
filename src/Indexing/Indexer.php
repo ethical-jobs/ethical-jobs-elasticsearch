@@ -194,7 +194,7 @@ class Indexer
      */
     protected function log(string $message = '', array $data = [], string $color = '#86f442'): void
     {
-        $processId = gethostname().":".getmypid();
+        $processId = app()->environment()."::".gethostname()."::".getmypid();
         
         $this->slack->message("*_".$processId."_* $message", $data, $color);
     }
