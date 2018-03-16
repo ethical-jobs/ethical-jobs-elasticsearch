@@ -1,11 +1,12 @@
 <?php
 
-namespace EthicalJobs\Tests\Elasticsearch\Integration;
+namespace Tests\Integration;
 
 use Elasticsearch\Client;
 use Illuminate\Support\Facades\Event;
 use EthicalJobs\Elasticsearch\Index;
-use EthicalJobs\Elasticsearch\DocumentIndexer;
+use EthicalJobs\Elasticsearch\Indexing\Indexer;
+use EthicalJobs\Elasticsearch\Indexing\SlackLogger;
 
 class ServiceProviderTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
 {
@@ -67,10 +68,21 @@ class ServiceProviderTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
      */
     public function it_registers_document_indexer_instance()
     {
-        $indexer = $this->app->make(DocumentIndexer::class);
+        $indexer = $this->app->make(Indexer::class);
 
-        $this->assertInstanceOf(DocumentIndexer::class, $indexer);
-    }         
+        $this->assertInstanceOf(Indexer::class, $indexer);
+    }   
+
+    /**
+     * @test
+     * @group Unit
+     */
+    public function it_registers_a_slack_logger()
+    {
+        $logger = $this->app->make(SlackLogger::class);
+
+        $this->assertInstanceOf(SlackLogger::class, $logger);
+    }              
 
     /**
      * @test

@@ -5,7 +5,7 @@ namespace EthicalJobs\Elasticsearch;
 use Illuminate\Database\Eloquent\Model;
 use EthicalJobs\Elasticsearch\Events;
 use EthicalJobs\Elasticsearch\Utilities;
-use EthicalJobs\Elasticsearch\DocumentIndexer;
+use EthicalJobs\Elasticsearch\Indexing\Indexer;
 
 /**
  * Updates elasticsearch from eloquent model events.
@@ -18,17 +18,17 @@ class IndexableObserver
     /**
      * Elastic search index service
      *
-     * @param \App\Services\Elasticsearch\DocumentIndexer
+     * @param \EthicalJobs\Elasticsearch\Indexing\Indexer
      */
     private $indexer;
 
     /**
      * Constructor
      *
-     * @param \App\Services\Elasticsearch\DocumentIndexer $indexer
+     * @param \EthicalJobs\Elasticsearch\Indexing\Indexer $indexer
      * @return void
      */
-    public function __construct(DocumentIndexer $indexer)
+    public function __construct(Indexer $indexer)
     {
         $this->indexer = $indexer;
     }

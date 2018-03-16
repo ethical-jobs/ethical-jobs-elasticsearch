@@ -1,11 +1,11 @@
 <?php
 
-namespace EthicalJobs\Tests\Elasticsearch\Integration\Observer;
+namespace Tests\Integration;
 
 use Mockery;
 use Illuminate\Support\Facades\App;
 use EthicalJobs\Tests\Elasticsearch\Fixtures;
-use EthicalJobs\Elasticsearch\DocumentIndexer;
+use EthicalJobs\Elasticsearch\Indexing\Indexer;
 
 class IndexableObserverTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
 {
@@ -15,7 +15,7 @@ class IndexableObserverTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
      */
     public function it_indexes_created_indexables()
     {
-        $indexer = Mockery::mock(DocumentIndexer::class)
+        $indexer = Mockery::mock(Indexer::class)
             ->shouldReceive('indexDocument')
             ->once()
             ->withArgs(function($person) {
@@ -25,7 +25,7 @@ class IndexableObserverTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
             })
             ->getMock();
 
-        App::instance(DocumentIndexer::class, $indexer);
+        App::instance(Indexer::class, $indexer);
 
         factory(Fixtures\Person::class)->create([
             'first_name'    => 'Andrew',
@@ -39,7 +39,7 @@ class IndexableObserverTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
      */
     public function it_indexes_updated_indexables()
     {
-        $indexer = Mockery::mock(DocumentIndexer::class)
+        $indexer = Mockery::mock(Indexer::class)
             ->shouldReceive('indexDocument')
             ->once()
             ->withAnyArgs()
@@ -54,7 +54,7 @@ class IndexableObserverTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
             ->andReturn(null)            
             ->getMock();
 
-        App::instance(DocumentIndexer::class, $indexer);
+        App::instance(Indexer::class, $indexer);
 
         factory(Fixtures\Person::class)
             ->create([
@@ -73,7 +73,7 @@ class IndexableObserverTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
      */
     public function it_indexes_soft_deleted_indexables()
     {
-        $indexer = Mockery::mock(DocumentIndexer::class)
+        $indexer = Mockery::mock(Indexer::class)
             ->shouldReceive('indexDocument')
             ->once()
             ->withAnyArgs()
@@ -87,7 +87,7 @@ class IndexableObserverTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
             ->andReturn(null)            
             ->getMock();
 
-        App::instance(DocumentIndexer::class, $indexer);
+        App::instance(Indexer::class, $indexer);
 
         $person = factory(Fixtures\Person::class)->create([
             'first_name'    => 'Andrew',
@@ -103,7 +103,7 @@ class IndexableObserverTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
      */
     public function it_deletes_non_soft_deleted_indexables()
     {
-        $indexer = Mockery::mock(DocumentIndexer::class)
+        $indexer = Mockery::mock(Indexer::class)
             ->shouldReceive('indexDocument')
             ->once()
             ->withAnyArgs()
@@ -117,7 +117,7 @@ class IndexableObserverTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
             ->andReturn(null)            
             ->getMock();
 
-        App::instance(DocumentIndexer::class, $indexer);
+        App::instance(Indexer::class, $indexer);
 
         $family = factory(Fixtures\Family::class)->create([
             'surname' => 'McLagan',
@@ -132,7 +132,7 @@ class IndexableObserverTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
      */
     public function it_indexes_restored_indexables()
     {
-        $indexer = Mockery::mock(DocumentIndexer::class)
+        $indexer = Mockery::mock(Indexer::class)
             ->shouldReceive('indexDocument')
             ->times(3)
             ->withArgs(function($person) {
@@ -143,7 +143,7 @@ class IndexableObserverTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
             ->andReturn(null)        
             ->getMock();
 
-        App::instance(DocumentIndexer::class, $indexer);
+        App::instance(Indexer::class, $indexer);
 
         $person = factory(Fixtures\Person::class)->create([
             'first_name'    => 'Andrew',
