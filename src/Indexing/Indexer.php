@@ -5,6 +5,8 @@ namespace EthicalJobs\Elasticsearch\Indexing;
 use Elasticsearch\Client;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Builder;
+use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Output\ConsoleOutput;
 use EthicalJobs\Elasticsearch\Exceptions\IndexingException;
 use EthicalJobs\Elasticsearch\Indexable;
 use EthicalJobs\Elasticsearch\Utilities;
@@ -37,17 +39,17 @@ class Indexer
      *
      * @param \EthicalJobs\Elasticsearch\Indexing\Logger
      */
-    private $slack;    
+    private $logger;    
 
     /**
      * Constructor
      *
      * @param \Elasticsearch\Client $client
      * @param \EthicalJobs\Elasticsearch\Index $index
-     * @param \EthicalJobs\Elasticsearch\Indexing\Logger $slack
+     * @param \EthicalJobs\Elasticsearch\Indexing\Logger $logger
      * @return void
      */
-    public function __construct(Client $client, Index $index, Logger $slack)
+    public function __construct(Client $client, Index $index, Logger $logger)
     {
         \DB::disableQueryLog();
 
@@ -55,7 +57,7 @@ class Indexer
 
         $this->index = $index;
 
-        $this->slack = $slack;
+        $this->logger = $logger;
     }
 
     /**
@@ -106,22 +108,26 @@ class Indexer
             'chunkSize'     => $chunkSize,
         ]);
 
-        $query->latest()->chunk($chunkSize, function ($chunk) {
+        $progress = new ProgressBar(new ConsoleOutput, $query->count());
+
+        $query->latest()->chunk($chunkSize, function ($chunk) use ($progress) {
 
             $response = $this->bulkRequest($chunk);
 
-            if (! Utilities::isResponseValid($response)) {
-
+            if (Utilities::isResponseValid($response) === false) {
                 $this->log('Indexing error', Utilities::getResponseErrors($response), '#f44242');
-
                 throw new IndexingException('Invalid request parameters');
             }
+
+            $progress->advance();
         });
 
         $this->log('Indexing complete', [
             'elapsed' => microtime(true) - $start.' seconds',
             'items'   => $query->count(),
         ]);
+
+        $progress->finish();
     }
 
     /**
@@ -196,6 +202,6 @@ class Indexer
     {
         $processId = app()->environment()."::".gethostname()."::".getmypid();
         
-        $this->slack->message("*_".$processId."_* $message", $data, $color);
+        $this->logger->message("*_".$processId."_* $message", $data, $color);
     }
 }

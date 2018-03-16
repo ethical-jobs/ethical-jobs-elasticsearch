@@ -27,7 +27,7 @@ class Logger
      *
      * @param \Symfony\Component\Console\Output\ConsoleOutput
      */
-    private $console;    
+    private $console;         
 
     /**
      * Constructor
