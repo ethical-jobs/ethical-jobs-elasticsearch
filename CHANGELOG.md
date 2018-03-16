@@ -1,3 +1,8 @@
+# v1.3.0
+
+- Added async indexing feature
+- Added slack indexing logger
+
 # v1.2.2
 
 - Removing default settings and mappings from config
