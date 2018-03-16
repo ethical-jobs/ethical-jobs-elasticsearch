@@ -6,17 +6,19 @@ use Maknz\Slack\Client as SlackClient;
 use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
 use Illuminate\Support\Facades\Event;
-use EthicalJobs\Elasticsearch\Index;
-use EthicalJobs\Elasticsearch\Console;
-use EthicalJobs\Elasticsearch\IndexSettings;
+use Symfony\Component\Console\Output\ConsoleOutput;
 use EthicalJobs\Elasticsearch\Indexing\Indexer;
 use EthicalJobs\Elasticsearch\Indexing\Logger;
+use EthicalJobs\Elasticsearch\IndexSettings;
+use EthicalJobs\Elasticsearch\Console;
+use EthicalJobs\Elasticsearch\Index;
 
 /**
  * Elasticsearch service provider
  *
  * @author Andrew McLagan <andrew@ethicaljobs.com.au>
  */
+
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
     /**
@@ -152,11 +154,12 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     protected function registerLogger(): void
     {
         $this->app->bind(Logger::class, function ($app) {
-            $client = new SlackClient(
+            $slack = new SlackClient(
                 config('elasticsearch.logging.slack.webhook'), 
                 config('elasticsearch.logging.slack')
             );
-            return new Logger($client);
+            $console = new ConsoleOutput;
+            return new Logger($slack, $console);
         });
     }         
 

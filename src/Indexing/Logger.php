@@ -4,6 +4,7 @@ namespace EthicalJobs\Elasticsearch\Indexing;
 
 use Maknz\Slack\Client;
 use Illuminate\Support\Facades\App;
+use Symfony\Component\Console\Output\ConsoleOutput;
 use EthicalJobs\Elasticsearch\Utilities;
 
 /**
@@ -19,18 +20,27 @@ class Logger
      *
      * @param \Maknz\Slack\Client
      */
-    private $client;
+    private $slack;
+
+    /**
+     * Console output
+     *
+     * @param \Symfony\Component\Console\Output\ConsoleOutput
+     */
+    private $console;    
 
     /**
      * Constructor
      *
-     * @param \Maknz\Slack\Client $client
-     * @param array $settings
+     * @param \Maknz\Slack\Client $slack
+     * @param \Symfony\Component\Console\Output\ConsoleOutput $console
      * @return void
      */
-    public function __construct(Client $client)
+    public function __construct(Client $slack, ConsoleOutput $console)
     {
-        $this->client = $client;
+        $this->slack = $slack;
+
+        $this->console = $console;
     }
 
     /**
@@ -60,7 +70,7 @@ class Logger
      */
     protected function slack(string $message, array $data = [], string $color = '#86f442'): void
     {
-        $this->client
+        $this->slack
             ->attach([
                 'fallback'  => '',
                 'text'      => '',
@@ -80,9 +90,9 @@ class Logger
      */
     protected function console(string $message, array $data = [], string $color = '#86f442'): void
     {
-        dump($message);
-        dump($data);
-        dump("\n");
+        $this->console->writeln("<comment>$message</comment>");
+
+        $this->console->writeln("<info>".$this->encodeArray($data)."</info>");
     }        
 
     /**
@@ -105,10 +115,21 @@ class Logger
         } else {
             $fields[] = [
                 'title' => 'json',
-                'value' => json_encode($data, JSON_PRETTY_PRINT),
+                'value' => $this->encodeArray($data),
             ];
         }
 
         return $fields;
     }
+
+    /**
+     * Converts an array to printable json
+     *
+     * @param array $data
+     * @return string
+     */
+    protected function encodeArray(array $data): string
+    {
+        return json_encode($data, JSON_PRETTY_PRINT);
+    }    
 }
