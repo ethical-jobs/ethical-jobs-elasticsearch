@@ -4,7 +4,6 @@ namespace Tests\Integration\Indexing;
 
 use Mockery;
 use Maknz\Slack\Client;
-use Illuminate\Support\Facades\App;
 use EthicalJobs\Elasticsearch\Indexing\SlackLogger;
 
 class SlackLoggerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
@@ -15,11 +14,6 @@ class SlackLoggerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
      */
     public function it_can_log_a_message()
     {
-        App::shouldReceive('environment')
-            ->once()
-            ->withNoArgs()
-            ->andReturn('production');
-
         $client = Mockery::mock(Client::class)
             ->shouldReceive('attach')
             ->once()
@@ -28,9 +22,9 @@ class SlackLoggerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
                 'text'      => 'Indexing log',
                 'color'     => 'yellow',
                 'fields'    => [
-                    'foo'       => 'bar',
-                    'age'       => 34,
-                    'height'    => 192,
+                    ['title' => 'foo','value' => 'bar'],
+                    ['title' => 'age','value' => 34],
+                    ['title' => 'height','value' => 192],
                 ],
             ])
             ->andReturn(Mockery::self())
