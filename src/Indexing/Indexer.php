@@ -104,11 +104,11 @@ class Indexer
 
         $this->log('Indexing documents', [
             'items'         => $query->count(),
-            'totalChunks'   => ceil($query->count() / $chunkSize),
+            'totalChunks'   => $totalChunks = ceil($query->count() / $chunkSize),
             'chunkSize'     => $chunkSize,
         ]);
 
-        $progress = new ProgressBar(new ConsoleOutput, $query->count());
+        $progress = new ProgressBar(new ConsoleOutput, $totalChunks);
 
         $query->latest()->chunk($chunkSize, function ($chunk) use ($progress) {
 
