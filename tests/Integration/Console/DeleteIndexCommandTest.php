@@ -1,6 +1,6 @@
 <?php
 
-namespace EthicalJobs\Tests\Elasticsearch\Integration\Console;
+namespace Tests\Integration\Console;
 
 use Mockery;
 use Illuminate\Support\Facades\App;

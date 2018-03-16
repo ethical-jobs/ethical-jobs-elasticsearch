@@ -2,12 +2,15 @@
 
 namespace EthicalJobs\Elasticsearch;
 
-use Illuminate\Support\Facades\Event;
+use Maknz\Slack\Client as SlackClient;
 use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
+use Illuminate\Support\Facades\Event;
 use EthicalJobs\Elasticsearch\Index;
 use EthicalJobs\Elasticsearch\Console;
 use EthicalJobs\Elasticsearch\IndexSettings;
+use EthicalJobs\Elasticsearch\Indexing\Indexer;
+use EthicalJobs\Elasticsearch\Indexing\SlackLogger;
 
 /**
  * Elasticsearch service provider
@@ -60,6 +63,8 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         $this->registerIndexSingleton();
 
         $this->registerDocumentIndexer();
+
+        $this->registerSlackLogger();
     }
 
     /**
@@ -72,7 +77,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         return [
             Index::class,
             Client::class,
-            DocumentIndexer::class,
+            Indexer::class,
         ];
     }    
 
@@ -130,14 +135,30 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      */
     protected function registerDocumentIndexer(): void
     {
-        $this->app->bind(DocumentIndexer::class, function ($app) {
-            return new DocumentIndexer(
+        $this->app->bind(Indexer::class, function ($app) {
+            return new Indexer(
                 $app[Client::class],
                 $app[Index::class],
-                config('elasticsearch.indexing.chunk-size', null)
+                $app[SlackLogger::class]
             );
         });
-    }       
+    }     
+
+    /**
+     * Register slack logger
+     *
+     * @return void
+     */
+    protected function registerSlackLogger(): void
+    {
+        $this->app->bind(SlackLogger::class, function ($app) {
+            $client = new SlackClient(
+                config('elasticsearch.logging.slack.webhook'), 
+                config('elasticsearch.logging.slack')
+            );
+            return new SlackLogger($client);
+        });
+    }         
 
     /**
      * Configure indexable observers

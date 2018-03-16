@@ -1,6 +1,6 @@
 <?php
 
-namespace EthicalJobs\Tests\Elasticsearch\Integration\Hydrators;
+namespace Tests\Integration\Hydrators;
 
 use ArrayObject;
 use Illuminate\Support\Collection;

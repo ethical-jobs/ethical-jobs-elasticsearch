@@ -3,11 +3,11 @@
 namespace EthicalJobs\Elasticsearch\Testing;
 
 use Mockery;
-use M6Web\Component\ElasticsearchMock\Client as MockClient;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Collection;
-use EthicalJobs\Elasticsearch\DocumentIndexer;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Artisan;
+use M6Web\Component\ElasticsearchMock\Client as MockClient;
+use EthicalJobs\Elasticsearch\Indexing\Indexer;
 
 /**
  * Mocks the elasticsearch client
@@ -47,8 +47,8 @@ trait InteractsWithElasticsearch
      */
     public function withoutElasticsearchObserver(): void
     {
-        $indexer = Mockery::mock(DocumentIndexer::class)->shouldIgnoreMissing();
+        $indexer = Mockery::mock(Indexer::class)->shouldIgnoreMissing();
 
-        App::instance(DocumentIndexer::class, $indexer);
+        App::instance(Indexer::class, $indexer);
     }     
 }

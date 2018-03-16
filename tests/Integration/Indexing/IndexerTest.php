@@ -1,34 +1,18 @@
 <?php
 
-namespace EthicalJobs\Tests\Elasticsearch\Integration\Elasticsearch;
+namespace Tests\Integration\Indexing;
 
 use Mockery;
 use Elasticsearch\Client;
-use EthicalJobs\Elasticsearch\DocumentIndexer;
+use Illuminate\Support\Facades\Queue;
+use EthicalJobs\Elasticsearch\Indexing\ProcessIndexQuery;
+use EthicalJobs\Elasticsearch\Indexing\SlackLogger;
+use EthicalJobs\Elasticsearch\Indexing\Indexer;
 use EthicalJobs\Tests\Elasticsearch\Fixtures;
 use EthicalJobs\Elasticsearch\Index;
 
-class DocumentIndexerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
+class IndexerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
 {
-    /**
-     * @test
-     * @group Integration
-     */
-    public function it_can_set_class_params()
-    {
-        $client = Mockery::mock(Client::class);
-
-        $index = app()->make(Index::class);
-
-        $indexer = new DocumentIndexer($client, $index);
-
-        $this->assertInstanceOf(DocumentIndexer::class, $indexer->setClient($client));
-
-        $this->assertInstanceOf(DocumentIndexer::class, $indexer->setChunkSize(5));
-
-        $this->assertInstanceOf(DocumentIndexer::class, $indexer->setLogging(true));
-    }
-
     /**
      * @test
      * @group Integration
@@ -51,7 +35,9 @@ class DocumentIndexerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
 
         $index = app()->make(Index::class);
 
-        $indexer = new DocumentIndexer($client, $index);            
+        $logger = Mockery::mock(SlackLogger::class)->shouldIgnoreMissing();
+
+        $indexer = new Indexer($client, $index, $logger);            
 
         $result = $indexer->indexDocument($person);
 
@@ -62,34 +48,7 @@ class DocumentIndexerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
      * @test
      * @group Integration
      */
-    public function it_can_delete_a_single_entity()
-    {
-        $person = factory(Fixtures\Person::class)->create();
-
-        $client = Mockery::mock(Client::class)
-            ->shouldReceive('delete')
-            ->with([
-                'index' => 'testing',
-                'id'    => 1,
-                'type'  => 'people',
-            ])
-            ->andReturn('deleted')
-            ->getMock();
-
-        $index = app()->make(Index::class);
-
-        $indexer = new DocumentIndexer($client, $index); 
-
-        $result = $indexer->deleteDocument($person);
-
-        $this->assertEquals('deleted', $result);
-    }
-
-    /**
-     * @test
-     * @group Integration
-     */
-    public function it_can_index_a_collection_from_a_query()
+    public function it_can_index_by_query()
     {
         $families = factory(Fixtures\Family::class, 6)->create();
 
@@ -139,10 +98,42 @@ class DocumentIndexerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
 
         $index = app()->make(Index::class);
 
-        $indexer = new DocumentIndexer($client, $index); 
+        $logger = Mockery::mock(SlackLogger::class)->shouldIgnoreMissing();
 
-        $indexer
-            ->setChunkSize(2)
-            ->indexCollection($query);
+        $indexer = new Indexer($client, $index, $logger);            
+
+        $indexer->indexByQuery($query, 2);
     }    
+
+    /**
+     * @test
+     * @group Integration
+     */
+    public function it_can_multi_process_indexing()
+    {
+        Queue::fake();
+
+        factory(Fixtures\Family::class, 1000)->create();
+
+        $query = Fixtures\Family::query();
+
+        $indexer = Mockery::mock(Indexer::class)
+            ->makePartial()
+            ->shouldAllowMockingProtectedMethods()
+            ->shouldReceive('log')
+            ->once()
+            ->withAnyArgs()
+            ->andReturn(null)
+            ->getMock();
+
+        $indexer->queueIndexByQuery($query, 5, 155);
+
+        Queue::assertPushed(ProcessIndexQuery::class, 5);        
+
+        Queue::assertPushed(ProcessIndexQuery::class, function ($event) {
+            $this->assertEquals(200, $event->query->get()->count());
+            $this->assertEquals(155, $event->chunkSize);
+            return true;
+        });        
+    }        
 }

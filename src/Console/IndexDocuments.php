@@ -4,8 +4,7 @@ namespace EthicalJobs\Elasticsearch\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
-use EthicalJobs\Elasticsearch\DocumentIndexer;
+use EthicalJobs\Elasticsearch\Indexing\Indexer;
 use EthicalJobs\Elasticsearch\Utilities;
 use EthicalJobs\Elasticsearch\Indexable;
 use EthicalJobs\Elasticsearch\Index;
@@ -23,7 +22,11 @@ class IndexDocuments extends Command
      *
      * @var string
      */
-    protected $signature = 'ej:es:index {--indexables=*}';
+    protected $signature = 'ej:es:index
+                            {--chunk-size : How many documents to index at once}
+                            {--queue : Indexes documents via queue workers}
+                            {--processes : How many queue processes to boot}
+                            {--indexables=* : An array of indexables to index (none == all)}';
 
     /**
      * The console command description.
@@ -42,7 +45,7 @@ class IndexDocuments extends Command
     /**
      * Elastic search index service
      *
-     * @param \App\Services\Elasticsearch\DocumentIndexer
+     * @param \App\Services\Elasticsearch\Indexing\Indexer
      */
     private $indexer;
 
@@ -56,11 +59,11 @@ class IndexDocuments extends Command
     /**
      * Constructor
      *
-     * @param \App\Services\Elasticsearch\DocumentIndexer $indexer
+     * @param \App\Services\Elasticsearch\Indexing\Indexer $indexer
      * @param \EthicalJobs\Elasticsearch\Index $index
      * @return void
      */
-    public function __construct(Index $index, DocumentIndexer $indexer)
+    public function __construct(Index $index, Indexer $indexer)
     {
         parent::__construct();
 
@@ -76,19 +79,9 @@ class IndexDocuments extends Command
      */
     public function handle()
     {
-        if (Cache::has('ej:es:indexing')) {
-            return $this->error('Indexing operation currently running.');
-        }
-
-        Cache::put('ej:es:indexing', microtime(true), 20);
-
         foreach ($this->getIndexables() as $indexable) {
             $this->index($indexable);
         }
-
-        $this->info(">> Time elapsed ".(microtime(true)-Cache::get('ej:es:indexing'))." seconds");
-
-        Cache::forget('ej:es:indexing');
     }
 
     /**
@@ -99,13 +92,18 @@ class IndexDocuments extends Command
      */
     protected function index(string $indexable): void
     {
-        $this->info('Indexing: '.$indexable);
-
         $query = $this->getIndexableQuery($indexable);
 
-        $this->indexer
-            ->setLogging(true)
-            ->indexCollection($query);
+        $chunksize = $this->option('chunk-size') ?? 300;
+
+        if ($option = $this->option('queue')) {
+
+            $processes = $this->option('processes') ?? 4;
+
+            $this->indexer->queueIndexByQuery($query, $processes, $chunksize);
+        } else {
+            $this->indexer->indexByQuery($query, $chunksize);
+        }
     }
 
     /**

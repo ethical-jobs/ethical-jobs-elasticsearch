@@ -1,6 +1,6 @@
 <?php
 
-namespace EthicalJobs\Tests\Elasticsearch\Integration;
+namespace Tests\Integration;
 
 use Mockery;
 use Elasticsearch\Client;

@@ -1,13 +1,12 @@
 <?php
 
-namespace EthicalJobs\Tests\Elasticsearch\Integration\Console;
+namespace Tests\Integration\Console;
 
 use Mockery;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Artisan;
-use EthicalJobs\Elasticsearch\DocumentIndexer;
+use Illuminate\Database\Eloquent\Builder;
+use EthicalJobs\Elasticsearch\Indexing\Indexer;
 use EthicalJobs\Elasticsearch\Index;
 
 class IndexDocumentsCommandTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
@@ -16,81 +15,17 @@ class IndexDocumentsCommandTest extends \EthicalJobs\Tests\Elasticsearch\TestCas
      * @test
      * @group Integration
      */
-    public function it_does_nothing_when_cache_locked()
-    {
-        Cache::shouldReceive('has')
-            ->once()
-            ->with('ej:es:indexing')
-            ->andReturn(true);
-
-        Cache::shouldNotReceive('put');
-
-        Artisan::call('ej:es:index');
-    }
-
-    /**
-     * @test
-     * @group Integration
-     */
-    public function it_can_cache_lock_the_command()
-    {
-        $index = Mockery::mock(Index::class)
-            ->shouldReceive('getSettings')
-            ->once()
-            ->withNoArgs()
-            ->andReturn(Mockery::self())
-            ->shouldReceive('getIndexables')
-            ->once()
-            ->withNoArgs()
-            ->andReturn([])            
-            ->getMock();
-
-        App::instance(Index::class, $index);
-
-        Cache::shouldReceive('has')
-            ->once()
-            ->with('ej:es:indexing')
-            ->andReturn(false);
-
-        Cache::shouldReceive('put')
-            ->once()            
-            ->withArgs(function ($key, $value, $minutes) {
-                $this->assertEquals('ej:es:indexing', $key);
-                $this->assertTrue(is_float($value));
-                $this->assertEquals(20, $minutes);
-                return true;
-            });    
-
-        Cache::shouldReceive('get')
-            ->once()            
-            ->with('ej:es:indexing');      
-
-        Cache::shouldReceive('forget')
-            ->once()            
-            ->with('ej:es:indexing');                                        
-
-        Artisan::call('ej:es:index');
-    }   
-
-    /**
-     * @test
-     * @group Integration
-     */
-    public function it_can_index_indexables()
+    public function it_indexes_all_indexables_by_default()
     {
         $expectedIndexables = App::make(Index::class)
             ->getSettings()
             ->getIndexables();
 
-        $indexer = Mockery::mock(DocumentIndexer::class);
+        $indexer = Mockery::mock(Indexer::class);
 
         foreach ($expectedIndexables as $indexable) {
             $indexer
-                ->shouldReceive('setLogging')
-                ->once()
-                ->with(true)
-                ->andReturn(Mockery::self())   
-                ->shouldReceive('indexCollection')
+                ->shouldReceive('indexByQuery')
                 ->once()
                 ->withArgs(function ($query) use ($indexable) {
                     $this->assertInstanceOf(Builder::class, $query);
@@ -104,7 +39,7 @@ class IndexDocumentsCommandTest extends \EthicalJobs\Tests\Elasticsearch\TestCas
                 ->andReturn(null);
         }              
 
-        App::instance(DocumentIndexer::class, $indexer);
+        App::instance(Indexer::class, $indexer);
 
         Artisan::call('ej:es:index');
     }   
@@ -115,26 +50,87 @@ class IndexDocumentsCommandTest extends \EthicalJobs\Tests\Elasticsearch\TestCas
      */
     public function it_can_index_by_parameters()
     {
-        $indexer = Mockery::mock(DocumentIndexer::class)
-            ->shouldReceive('setLogging')
+        $indexer = Mockery::mock(Indexer::class)
+            ->shouldReceive('indexByQuery')
             ->once()
-            ->with(true)
-            ->andReturn(Mockery::self())   
-            ->shouldReceive('indexCollection')
-            ->once()
-            ->withArgs(function ($query) {
+            ->withArgs(function ($query, $chunkSize) {
                 $this->assertInstanceOf(
                     \EthicalJobs\Tests\Elasticsearch\Fixtures\Family::class, 
                     $query->getModel()
                 );
+                $this->assertEquals(133, $chunkSize);
                 return true;
             })
             ->getMock(); 
 
-        App::instance(DocumentIndexer::class, $indexer);
+        App::instance(Indexer::class, $indexer);
 
         Artisan::call('ej:es:index', [
-            '--indexables' => 'EthicalJobs\Tests\Elasticsearch\Fixtures\Family',
+            '--indexables'  => 'EthicalJobs\Tests\Elasticsearch\Fixtures\Family',
+            '--chunk-size'   => 133,
         ]);
-    }       
+    }
+
+    /**
+     * @test
+     * @group Integration
+     */
+    public function it_queues_all_indexables_by_default()
+    {
+        $expectedIndexables = App::make(Index::class)
+            ->getSettings()
+            ->getIndexables();
+
+        $indexer = Mockery::mock(Indexer::class);
+
+        foreach ($expectedIndexables as $indexable) {
+            $indexer
+                ->shouldReceive('queueIndexByQuery')
+                ->once()
+                ->withArgs(function ($query) use ($indexable) {
+                    $this->assertInstanceOf(Builder::class, $query);
+                    $this->assertInstanceOf($indexable, $query->getModel());
+                    $this->assertEquals(
+                        (new $indexable)->getDocumentRelations(),
+                        array_keys($query->getEagerLoads())
+                    );
+                    return true;
+                })
+                ->andReturn(null);
+        }              
+
+        App::instance(Indexer::class, $indexer);
+
+        Artisan::call('ej:es:index', [
+            '--queue' => true,
+        ]);
+    }   
+
+    /**
+     * @test
+     * @group Integration
+     */
+    public function it_can_queue_by_parameters()
+    {
+        $indexer = Mockery::mock(Indexer::class)
+            ->shouldReceive('queueIndexByQuery')
+            ->once()
+            ->withArgs(function ($query, $processes, $chunkSize) {
+                $this->assertInstanceOf(\EthicalJobs\Tests\Elasticsearch\Fixtures\Family::class, $query->getModel());
+                $this->assertEquals(3, $processes);
+                $this->assertEquals(133, $chunkSize);
+                return true;
+            })
+            ->andReturn(null)
+            ->getMock();         
+
+        App::instance(Indexer::class, $indexer);
+
+        Artisan::call('ej:es:index', [
+            '--queue'        => true,
+            '--chunk-size'   => 133,            
+            '--processes'    => 3,
+            '--indexables'   => 'EthicalJobs\Tests\Elasticsearch\Fixtures\Family',
+        ]);
+    }                  
 }

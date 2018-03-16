@@ -57,15 +57,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Indexing
+    | Logging
     |--------------------------------------------------------------------------
     |
-    | Indexing settings dictate how document indexing is performed
+    | Determines how indexing opeations are logged
     |
     */
    
-    'indexing' => [
-        'chunk-size' => 300,
+    'logging' => [
+        'slack' => [
+            'webhook'   => 'https://hooks.slack.com/...',
+            'channel'   => '#elasticsearch',
+            'username'  => 'Elasticsearch',
+        ]
     ],
 
     /*
