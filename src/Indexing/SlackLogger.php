@@ -3,6 +3,7 @@
 namespace EthicalJobs\Elasticsearch\Indexing;
 
 use Maknz\Slack\Client;
+use Illuminate\Support\Facades\App;
 
 /**
  * Logs indexing operations into slack
@@ -41,13 +42,15 @@ class SlackLogger
      */
     public function message(string $message, array $data = [], string $color = '#86f442'): void
     {
-        $this->client
-            ->attach([
-                'fallback'  => 'Indexing log',
-                'text'      => 'Indexing log',
-                'color'     => $color,
-                'fields'    => $data,
-            ])
-            ->send($message);        
+        if (in_array(App::environment(), ['production', 'staging'])) {
+            $this->client
+                ->attach([
+                    'fallback'  => 'Indexing log',
+                    'text'      => 'Indexing log',
+                    'color'     => $color,
+                    'fields'    => $data,
+                ])
+                ->send($message);        
+        }
     }  
 }
