@@ -93,6 +93,8 @@ class Logger
         $this->console->writeln("<comment>$message</comment>");
 
         $this->console->writeln("<info>".$this->encodeArray($data)."</info>");
+
+        $this->console->writeln(" ");
     }        
 
     /**
