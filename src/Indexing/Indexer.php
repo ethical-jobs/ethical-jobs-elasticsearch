@@ -35,7 +35,7 @@ class Indexer
     /**
      * Slack logging instance
      *
-     * @param \EthicalJobs\Elasticsearch\Indexing\SlackLogger
+     * @param \EthicalJobs\Elasticsearch\Indexing\Logger
      */
     private $slack;    
 
@@ -44,10 +44,10 @@ class Indexer
      *
      * @param \Elasticsearch\Client $client
      * @param \EthicalJobs\Elasticsearch\Index $index
-     * @param \EthicalJobs\Elasticsearch\Indexing\SlackLogger $slack
+     * @param \EthicalJobs\Elasticsearch\Indexing\Logger $slack
      * @return void
      */
-    public function __construct(Client $client, Index $index, SlackLogger $slack)
+    public function __construct(Client $client, Index $index, Logger $slack)
     {
         \DB::disableQueryLog();
 
@@ -112,7 +112,7 @@ class Indexer
 
             if (! Utilities::isResponseValid($response)) {
 
-                $this->log('Indexing error', Utilities::getResponseErrors($response), 'critical');
+                $this->log('Indexing error', Utilities::getResponseErrors($response), '#f44242');
 
                 throw new IndexingException('Invalid request parameters');
             }
@@ -194,8 +194,8 @@ class Indexer
      */
     protected function log(string $message = '', array $data = [], string $color = '#86f442'): void
     {
-        $process = gethostname().":".getmypid();
+        $processId = gethostname().":".getmypid();
         
-        $this->slack->message("*_".$process."_* $message", $data, $color);
+        $this->slack->message("*_".$processId."_* $message", $data, $color);
     }
 }

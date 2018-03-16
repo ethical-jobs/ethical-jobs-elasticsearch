@@ -6,7 +6,7 @@ use Mockery;
 use Elasticsearch\Client;
 use Illuminate\Support\Facades\Queue;
 use EthicalJobs\Elasticsearch\Indexing\ProcessIndexQuery;
-use EthicalJobs\Elasticsearch\Indexing\SlackLogger;
+use EthicalJobs\Elasticsearch\Indexing\Logger;
 use EthicalJobs\Elasticsearch\Indexing\Indexer;
 use EthicalJobs\Tests\Elasticsearch\Fixtures;
 use EthicalJobs\Elasticsearch\Index;
@@ -35,7 +35,7 @@ class IndexerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
 
         $index = app()->make(Index::class);
 
-        $logger = Mockery::mock(SlackLogger::class)->shouldIgnoreMissing();
+        $logger = Mockery::mock(Logger::class)->shouldIgnoreMissing();
 
         $indexer = new Indexer($client, $index, $logger);            
 
@@ -98,7 +98,7 @@ class IndexerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
 
         $index = app()->make(Index::class);
 
-        $logger = Mockery::mock(SlackLogger::class)->shouldIgnoreMissing();
+        $logger = Mockery::mock(Logger::class)->shouldIgnoreMissing();
 
         $indexer = new Indexer($client, $index, $logger);            
 

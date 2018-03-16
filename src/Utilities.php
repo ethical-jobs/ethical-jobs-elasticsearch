@@ -41,6 +41,22 @@ class Utilities
     }
 
     /**
+     * Determines if array is assoc or numerical
+     *
+     * TODO: migrate this to ethical-jobs-foundation:Arrays
+     * 
+     * @param array $array
+     * @return bool
+     */
+    public static function isAssocArray(array $array): bool
+    {
+        if ([] === $array) {
+            return false;
+        }
+        return array_keys($array) !== range(0, count($array) - 1);
+    }    
+
+    /**
      * Determine if model is soft deletable
      *
      * @param mixed $entity

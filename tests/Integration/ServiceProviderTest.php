@@ -6,7 +6,7 @@ use Elasticsearch\Client;
 use Illuminate\Support\Facades\Event;
 use EthicalJobs\Elasticsearch\Index;
 use EthicalJobs\Elasticsearch\Indexing\Indexer;
-use EthicalJobs\Elasticsearch\Indexing\SlackLogger;
+use EthicalJobs\Elasticsearch\Indexing\Logger;
 
 class ServiceProviderTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
 {
@@ -79,9 +79,9 @@ class ServiceProviderTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
      */
     public function it_registers_a_slack_logger()
     {
-        $logger = $this->app->make(SlackLogger::class);
+        $logger = $this->app->make(Logger::class);
 
-        $this->assertInstanceOf(SlackLogger::class, $logger);
+        $this->assertInstanceOf(Logger::class, $logger);
     }              
 
     /**

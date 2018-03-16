@@ -4,9 +4,10 @@ namespace Tests\Integration\Indexing;
 
 use Mockery;
 use Maknz\Slack\Client;
-use EthicalJobs\Elasticsearch\Indexing\SlackLogger;
+use Illuminate\Support\Facades\App;
+use EthicalJobs\Elasticsearch\Indexing\Logger;
 
-class SlackLoggerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
+class LoggerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
 {
     /**
      * @test
@@ -18,8 +19,8 @@ class SlackLoggerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
             ->shouldReceive('attach')
             ->once()
             ->with([
-                'fallback'  => 'Indexing log',
-                'text'      => 'Indexing log',
+                'fallback'  => '',
+                'text'      => '',
                 'color'     => 'yellow',
                 'fields'    => [
                     ['title' => 'foo','value' => 'bar'],
@@ -33,7 +34,7 @@ class SlackLoggerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
             ->andReturn(null)
             ->getMock();
 
-        $logger = new SlackLogger($client);
+        $logger = new Logger($client);
 
         $logger->message('Hello world!', [
             'foo'       => 'bar',

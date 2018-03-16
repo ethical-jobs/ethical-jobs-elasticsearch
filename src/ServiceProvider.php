@@ -10,7 +10,7 @@ use EthicalJobs\Elasticsearch\Index;
 use EthicalJobs\Elasticsearch\Console;
 use EthicalJobs\Elasticsearch\IndexSettings;
 use EthicalJobs\Elasticsearch\Indexing\Indexer;
-use EthicalJobs\Elasticsearch\Indexing\SlackLogger;
+use EthicalJobs\Elasticsearch\Indexing\Logger;
 
 /**
  * Elasticsearch service provider
@@ -64,7 +64,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
         $this->registerDocumentIndexer();
 
-        $this->registerSlackLogger();
+        $this->registerLogger();
     }
 
     /**
@@ -139,7 +139,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             return new Indexer(
                 $app[Client::class],
                 $app[Index::class],
-                $app[SlackLogger::class]
+                $app[Logger::class]
             );
         });
     }     
@@ -149,14 +149,14 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      *
      * @return void
      */
-    protected function registerSlackLogger(): void
+    protected function registerLogger(): void
     {
-        $this->app->bind(SlackLogger::class, function ($app) {
+        $this->app->bind(Logger::class, function ($app) {
             $client = new SlackClient(
                 config('elasticsearch.logging.slack.webhook'), 
                 config('elasticsearch.logging.slack')
             );
-            return new SlackLogger($client);
+            return new Logger($client);
         });
     }         
 
