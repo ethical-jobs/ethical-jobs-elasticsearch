@@ -1,6 +1,6 @@
 <?php
 
-namespace EthicalJobs\Tests\Elasticsearch\Fixtures;
+namespace Tests\Fixtures;
 
 use Illuminate\Database\Eloquent\Model;
 use EthicalJobs\Elasticsearch\Indexable;

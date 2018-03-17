@@ -3,9 +3,9 @@
 namespace Tests\Integration;
 
 use EthicalJobs\Elasticsearch\IndexSettings;
-use EthicalJobs\Tests\Elasticsearch\Fixtures;
+use Tests\Fixtures;
 
-class IndexSettingsTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
+class IndexSettingsTest extends \Tests\TestCase
 {
     /**
      * @test

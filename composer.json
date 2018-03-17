@@ -37,7 +37,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "EthicalJobs\\Tests\\Elasticsearch\\": "tests/"
+            "Tests\\": "tests/"
         }
     },
     "minimum-stability": "dev",

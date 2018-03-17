@@ -6,9 +6,9 @@ use Mockery;
 use Elasticsearch\Client;
 use EthicalJobs\Elasticsearch\Index;
 use EthicalJobs\Elasticsearch\Indexable;
-use EthicalJobs\Tests\Elasticsearch\Fixtures;
+use Tests\Fixtures;
 
-class IndexTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
+class IndexTest extends \Tests\TestCase
 {
     /**
      * @test

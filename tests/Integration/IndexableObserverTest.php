@@ -4,10 +4,10 @@ namespace Tests\Integration;
 
 use Mockery;
 use Illuminate\Support\Facades\App;
-use EthicalJobs\Tests\Elasticsearch\Fixtures;
+use Tests\Fixtures;
 use EthicalJobs\Elasticsearch\Indexing\Indexer;
 
-class IndexableObserverTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
+class IndexableObserverTest extends \Tests\TestCase
 {
     /**
      * @test

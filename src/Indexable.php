@@ -2,6 +2,8 @@
 
 namespace EthicalJobs\Elasticsearch;
 
+use Illuminate\Database\Eloquent\Builder;
+
 /**
  * Indexable within elasticsearch interface
  *
@@ -44,4 +46,11 @@ interface Indexable
      * @return Array
      */
     public function getDocumentRelations();
+
+    /**
+     * Returns indexing query
+     *
+     * @return Illuminate\Database\Query\Builder
+     */
+    public function getIndexingQuery(): Builder;
 }

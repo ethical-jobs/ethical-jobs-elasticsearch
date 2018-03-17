@@ -8,7 +8,7 @@ use EthicalJobs\Elasticsearch\Index;
 use EthicalJobs\Elasticsearch\Indexing\Indexer;
 use EthicalJobs\Elasticsearch\Indexing\Logger;
 
-class ServiceProviderTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
+class ServiceProviderTest extends \Tests\TestCase
 {
     /**
      * @test

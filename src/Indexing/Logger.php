@@ -90,11 +90,9 @@ class Logger
      */
     protected function console(string $message, array $data = [], string $color = '#86f442'): void
     {
-        $this->console->writeln("<comment>$message</comment>");
+        $this->console->writeln("<info>$message</info>");
 
-        $this->console->writeln("<info>".$this->encodeArray($data)."</info>");
-
-        $this->console->writeln(" ");
+        $this->console->writeln($this->encodeArray($data).PHP_EOL);
     }        
 
     /**
@@ -107,19 +105,10 @@ class Logger
     {
         $fields = [];
 
-        if (Utilities::isAssocArray($data)) {
-            foreach ($data as $key => $value) {
-                $fields[] = [
-                    'title' => $key,
-                    'value' => $value,
-                ];
-            }
-        } else {
-            $fields[] = [
-                'title' => 'json',
-                'value' => $this->encodeArray($data),
-            ];
-        }
+        $fields[] = [
+            'title' => '',
+            'value' => $this->encodeArray($data),
+        ];
 
         return $fields;
     }

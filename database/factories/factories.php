@@ -1,6 +1,6 @@
 <?php
 
-use EthicalJobs\Tests\Elasticsearch\Fixtures;
+use Tests\Fixtures;
 
 $factory->define(Fixtures\Person::class, function (Faker\Generator $faker) {
     return [

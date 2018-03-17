@@ -63,11 +63,18 @@ class Indexer
     /**
      * Indexes a indexable instance
      *
-     * @param \App\Models\Interfaces\Indexable $indexable
+     * @param \EthicalJobs\Elasticsearch\Indexabl $indexable
      * @return Array
      */
     public function indexDocument(Indexable $indexable)
     {
+        $this->log('Indexing document', [
+            'index'     => $this->index->getIndexName(),
+            'id'        => $indexable->getDocumentKey(),
+            'type'      => $indexable->getDocumentType(),
+            'body'      => $indexable->getDocumentTree(),
+        ]);
+
         return $this->client->index([
             'index'     => $this->index->getIndexName(),
             'id'        => $indexable->getDocumentKey(),
@@ -79,11 +86,18 @@ class Indexer
     /**
      * Deletes a indexable instance
      *
-     * @param \App\Models\Interfaces\Indexable $indexable
+     * @param \EthicalJobs\Elasticsearch\Indexabl $indexable
      * @return Array
      */
     public function deleteDocument(Indexable $indexable)
     {
+        $this->log('Deleteing document', [
+            'index'     => $this->index->getIndexName(),
+            'id'        => $indexable->getDocumentKey(),
+            'type'      => $indexable->getDocumentType(),
+            'body'      => $indexable->getDocumentTree(),
+        ]);
+
         return $this->client->delete([
             'index'     => $this->index->getIndexName(),
             'id'        => $indexable->getDocumentKey(),
@@ -92,74 +106,52 @@ class Indexer
     }    
 
     /**
-     * Indexes indexables from query
+     * Indexes all items of an indexable
      *
-     * @param \Illuminate\Support\Collection $query
-     * @param int $chunkSize
+     * @param \EthicalJobs\Elasticsearch\Indexing\IndexQuery $indexQuery
      * @return void
      */
-    public function indexByQuery(Builder $query, int $chunkSize = 300): void
+    public function indexQuery(IndexQuery $indexQuery): void
     {
         $start = microtime(true);
 
-        $this->log('Indexing documents', [
-            'items'         => $query->count(),
-            'totalChunks'   => $totalChunks = ceil($query->count() / $chunkSize),
-            'chunkSize'     => $chunkSize,
-        ]);
+        $indexQuery->buildQuery();
 
-        $progress = new ProgressBar(new ConsoleOutput, $totalChunks);
+        $this->log('Indexing by query', $indexQuery->toArray());
 
-        $query->latest()->chunk($chunkSize, function ($chunk) use ($progress) {
+        $progress = new ProgressBar(new ConsoleOutput, $indexQuery->getParam('numberOfChunks'));
+
+        $indexQuery->chunk(function($chunk) use($progress) {
 
             $response = $this->bulkRequest($chunk);
 
             if (Utilities::isResponseValid($response) === false) {
-                $this->log('Indexing error', Utilities::getResponseErrors($response), '#f44242');
+                $this->log('Indexing error', Utilities::getResponseErrors($response));
                 throw new IndexingException('Invalid request parameters');
             }
 
             $progress->advance();
         });
 
-        $this->log('Indexing complete', [
-            'elapsed' => microtime(true) - $start.' seconds',
-            'items'   => $query->count(),
-        ]);
+        $this->log('Indexing complete', array_merge([
+            'timeSpentIndexing' => microtime(true) - $start.' seconds',
+        ], $indexQuery->toArray()));
 
         $progress->finish();
     }
 
     /**
-     * Indexes indexables via a query
+     * Queues and indexable for indexing
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param int $processes
-     * @param int $chunkSize
+     * @param \EthicalJobs\Elasticsearch\Indexing\IndexQuery $indexQuery
      * @return void
      */
-    public function queueIndexByQuery(Builder $query, int $processes = 3, int $chunkSize = 300): void
+    public function queueQuery(IndexQuery $indexQuery): void
     {
-        $pageSize = ceil($query->count() / $processes);
+        $this->log('Queueing indexing processes', $indexQuery->toArray());     
 
-        $this->log('Queueing documents', [
-            'items'     => $query->count(),
-            'processes' => $processes,
-            'pageSize'  => $pageSize,
-            'chunkSize' => $chunkSize,
-        ], '#4286f4');        
-
-        while ($processes !== 0) {
-
-            $offset = (int) (($processes - 1) * $pageSize);
-
-            $queryPage = $query
-                ->offset($offset)
-                ->limit($pageSize);
-
-            ProcessIndexQuery::dispatch($queryPage, $chunkSize);
-
-            $processes--;
+        foreach ($indexQuery->getSubQueries() as $subQuery) {
+            ProcessIndexQuery::dispatch($indexQuery);
         }
     }    
 
@@ -168,9 +160,9 @@ class Indexer
      *
      * @param \Illuminate\Support\Collection $collection
      * @param Bool $isDeleteRequest
-     * @return Array
+     * @return array
      */
-    protected function bulkRequest(Collection $collection)
+    protected function bulkRequest(Collection $collection): array
     {
         $params = [];
 
@@ -198,10 +190,10 @@ class Indexer
      * @param string $color
      * @return Void
      */
-    protected function log(string $message = '', array $data = [], string $color = '#86f442'): void
+    protected function log(string $message = '', array $data = []): void
     {
         $processId = app()->environment()."::".gethostname()."::".getmypid();
         
-        $this->logger->message("*_".$processId."_* $message", $data, $color);
+        $this->logger->message("$processId - $message", $data);
     }
 }

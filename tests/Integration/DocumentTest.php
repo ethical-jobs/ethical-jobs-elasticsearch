@@ -4,7 +4,7 @@ namespace Tests\Integration;
 
 use EthicalJobs\Elasticsearch\Index;
 
-class DocumentTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
+class DocumentTest extends \Tests\TestCase
 {
     /**
      * @test

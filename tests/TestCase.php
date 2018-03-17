@@ -1,11 +1,11 @@
 <?php
 
-namespace EthicalJobs\Tests\Elasticsearch;
+namespace Tests;
 
 use Orchestra\Database\ConsoleServiceProvider;
 use EthicalJobs\Elasticsearch\Testing\InteractsWithElasticsearch;
 use EthicalJobs\Elasticsearch\ServiceProvider;
-use EthicalJobs\Tests\Elasticsearch\Fixtures;
+use Tests\Fixtures;
 
 abstract class TestCase extends \Orchestra\Testbench\TestCase
 {

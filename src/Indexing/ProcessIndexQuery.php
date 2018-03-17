@@ -4,7 +4,6 @@ namespace EthicalJobs\Elasticsearch\Indexing;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
@@ -19,31 +18,21 @@ class ProcessIndexQuery implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable;
 
     /**
-     * Query to be indexed
+     * Indexing query instance
      * 
-     * @var Illuminate\Database\Eloquent\Builder
+     * @var EthicalJobs\Elasticsearch\Indexing\IndexQuery
      */
-    public $query;
-
-    /**
-     * Chunk size for downstream indexing
-     * 
-     * @var int
-     */
-    public $chunkSize;    
+    public $indexQuery;  
 
     /**
      * Create a new job instance.
      *
-     * @param  Illuminate\Database\Eloquent\Builder $query
-     * @param int $chunkSize
+     * @param EthicalJobs\Elasticsearch\Indexing\IndexQuery $indexQuery
      * @return void
      */
-    public function __construct(Builder $query, int $chunkSize)
+    public function __construct(IndexQuery $indexQuery)
     {
-        $this->query = $query;
-
-        $this->chunkSize = $chunkSize;
+        $this->indexQuery = $indexQuery;
     }
 
     /**
@@ -54,6 +43,6 @@ class ProcessIndexQuery implements ShouldQueue
      */
     public function handle(Indexer $indexer): void
     {
-        $indexer->indexByQuery($this->query, $this->chunkSize);
+        $indexer->indexQuery($this->indexQuery);
     }
 }

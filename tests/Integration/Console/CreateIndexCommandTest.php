@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
 use EthicalJobs\Elasticsearch\Index;
 
-class CreateIndexCommandTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
+class CreateIndexCommandTest extends \Tests\TestCase
 {
     /**
      * @test

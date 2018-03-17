@@ -6,12 +6,13 @@ use Mockery;
 use Elasticsearch\Client;
 use Illuminate\Support\Facades\Queue;
 use EthicalJobs\Elasticsearch\Indexing\ProcessIndexQuery;
-use EthicalJobs\Elasticsearch\Indexing\Logger;
+use EthicalJobs\Elasticsearch\Indexing\IndexQuery;
 use EthicalJobs\Elasticsearch\Indexing\Indexer;
-use EthicalJobs\Tests\Elasticsearch\Fixtures;
+use EthicalJobs\Elasticsearch\Indexing\Logger;
 use EthicalJobs\Elasticsearch\Index;
+use Tests\Fixtures\Person;
 
-class IndexerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
+class IndexerTest extends \Tests\TestCase
 {
     /**
      * @test
@@ -19,7 +20,7 @@ class IndexerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
      */
     public function it_can_index_a_single_entity()
     {
-        $person = factory(Fixtures\Person::class)->create();
+        $person = factory(Person::class)->create();
 
         $client = Mockery::mock(Client::class)
             ->shouldReceive('index')
@@ -48,91 +49,65 @@ class IndexerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
      * @test
      * @group Integration
      */
-    public function it_can_index_by_query()
+    public function it_can_index_by_indexQuery()
     {
-        $families = factory(Fixtures\Family::class, 6)->create();
+        factory(Person::class, 500)->create();
 
-        $query = Fixtures\Family::query();
+        $indexQuery = (new IndexQuery(new Person))
+            ->setChunkSize(50);
 
         $client = Mockery::mock(Client::class)
             ->shouldReceive('bulk')
-            ->once()
-            ->withArgs(function($params) use ($families) {
+            ->times(10)
+            ->withArgs(function($params) {
+                $this->assertEquals(100, count($params['body']));
                 $this->assertEquals('testing', array_get($params, 'body.0.index._index'));
-                $this->assertEquals('families', array_get($params, 'body.0.index._type'));
-                $this->assertEquals($families[0]->surname, array_get($params, 'body.1.surname'));
-                // -- Next family
-                $this->assertEquals('testing', array_get($params, 'body.0.index._index'));
-                $this->assertEquals('families', array_get($params, 'body.0.index._type'));                
-                $this->assertEquals($families[1]->surname, array_get($params, 'body.3.surname'));
+                $this->assertEquals('people', array_get($params, 'body.0.index._type'));
+                $this->assertTrue(array_has(array_get($params, 'body.1'), [
+                    'id', 'family_id', 'first_name', 'last_name', 
+                    'email', 'created_at', 'updated_at', 'deleted_at',
+                ]));
                 return true;
-            })
-            ->andReturn(['success'])
-            ->shouldReceive('bulk')
-            ->once()
-            ->withArgs(function($params) use ($families) {
-                $this->assertEquals('testing', array_get($params, 'body.0.index._index'));
-                $this->assertEquals('families', array_get($params, 'body.0.index._type'));
-                $this->assertEquals($families[2]->surname, array_get($params, 'body.1.surname'));
-                // -- Next family
-                $this->assertEquals('testing', array_get($params, 'body.0.index._index'));
-                $this->assertEquals('families', array_get($params, 'body.0.index._type'));                
-                $this->assertEquals($families[3]->surname, array_get($params, 'body.3.surname'));
-                return true;
-            })
-            ->andReturn(['success'])
-            ->shouldReceive('bulk')
-            ->once()
-            ->withArgs(function($params) use ($families) {
-                $this->assertEquals('testing', array_get($params, 'body.0.index._index'));
-                $this->assertEquals('families', array_get($params, 'body.0.index._type'));
-                $this->assertEquals($families[4]->surname, array_get($params, 'body.1.surname'));
-                // -- Next family
-                $this->assertEquals('testing', array_get($params, 'body.0.index._index'));
-                $this->assertEquals('families', array_get($params, 'body.0.index._type'));                
-                $this->assertEquals($families[5]->surname, array_get($params, 'body.3.surname'));
-                return true;
-            })
-            ->andReturn(['success'])                        
+            })       
+            ->andReturn([])
             ->getMock();
-
+            
         $index = app()->make(Index::class);
 
         $logger = Mockery::mock(Logger::class)->shouldIgnoreMissing();
 
         $indexer = new Indexer($client, $index, $logger);            
 
-        $indexer->indexByQuery($query, 2);
+        $indexer->indexQuery($indexQuery);
     }    
 
     /**
      * @test
      * @group Integration
      */
-    public function it_can_multi_process_indexing()
+    public function it_can_queue_indexing_of_IndexQueries()
     {
         Queue::fake();
 
-        factory(Fixtures\Family::class, 1000)->create();
+        factory(Person::class, 1000)->create();
 
-        $query = Fixtures\Family::query();
+        $indexQuery = (new IndexQuery(new Person))
+            ->setChunkSize(50)
+            ->setNumberOfProcesses(4);
 
-        $indexer = Mockery::mock(Indexer::class)
-            ->makePartial()
-            ->shouldAllowMockingProtectedMethods()
-            ->shouldReceive('log')
-            ->once()
-            ->withAnyArgs()
-            ->andReturn(null)
-            ->getMock();
+        $client = Mockery::mock(Client::class)->shouldIgnoreMissing();
+        $index = Mockery::mock(Index::class)->shouldIgnoreMissing();
+        $logger = Mockery::mock(Logger::class)->shouldIgnoreMissing();
 
-        $indexer->queueIndexByQuery($query, 5, 155);
+        $indexer = new Indexer($client, $index, $logger);            
 
-        Queue::assertPushed(ProcessIndexQuery::class, 5);        
+        $indexer->queueByQuery($indexQuery);
+
+        Queue::assertPushed(ProcessIndexQuery::class, 4);        
 
         Queue::assertPushed(ProcessIndexQuery::class, function ($event) {
-            $this->assertEquals(200, $event->query->get()->count());
-            $this->assertEquals(155, $event->chunkSize);
+            $this->assertEquals(1000, $event->indexQuery->query->get()->count());
+            $this->assertEquals(50, $event->indexQuery->getParam('chunkSize'));
             return true;
         });        
     }        

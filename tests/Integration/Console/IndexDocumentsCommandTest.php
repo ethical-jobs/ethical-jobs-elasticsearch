@@ -5,11 +5,11 @@ namespace Tests\Integration\Console;
 use Mockery;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Database\Eloquent\Builder;
+use EthicalJobs\Elasticsearch\Indexing\IndexQuery;
 use EthicalJobs\Elasticsearch\Indexing\Indexer;
 use EthicalJobs\Elasticsearch\Index;
 
-class IndexDocumentsCommandTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
+class IndexDocumentsCommandTest extends \Tests\TestCase
 {
     /**
      * @test
@@ -25,15 +25,11 @@ class IndexDocumentsCommandTest extends \EthicalJobs\Tests\Elasticsearch\TestCas
 
         foreach ($expectedIndexables as $indexable) {
             $indexer
-                ->shouldReceive('indexByQuery')
+                ->shouldReceive('indexQuery')
                 ->once()
-                ->withArgs(function ($query) use ($indexable) {
-                    $this->assertInstanceOf(Builder::class, $query);
-                    $this->assertInstanceOf($indexable, $query->getModel());
-                    $this->assertEquals(
-                        (new $indexable)->getDocumentRelations(),
-                        array_keys($query->getEagerLoads())
-                    );
+                ->withArgs(function ($indexQuery) use ($indexable) {
+                    $this->assertInstanceOf(IndexQuery::class, $indexQuery);
+                    $this->assertInstanceOf($indexable, $indexQuery->indexable);
                     return true;
                 })
                 ->andReturn(null);
@@ -43,33 +39,6 @@ class IndexDocumentsCommandTest extends \EthicalJobs\Tests\Elasticsearch\TestCas
 
         Artisan::call('ej:es:index');
     }   
-
-    /**
-     * @test
-     * @group Integration
-     */
-    public function it_can_index_by_parameters()
-    {
-        $indexer = Mockery::mock(Indexer::class)
-            ->shouldReceive('indexByQuery')
-            ->once()
-            ->withArgs(function ($query, $chunkSize) {
-                $this->assertInstanceOf(
-                    \EthicalJobs\Tests\Elasticsearch\Fixtures\Family::class, 
-                    $query->getModel()
-                );
-                $this->assertEquals(133, $chunkSize);
-                return true;
-            })
-            ->getMock(); 
-
-        App::instance(Indexer::class, $indexer);
-
-        Artisan::call('ej:es:index', [
-            '--indexables'  => 'EthicalJobs\Tests\Elasticsearch\Fixtures\Family',
-            '--chunk-size'   => 133,
-        ]);
-    }
 
     /**
      * @test
@@ -85,15 +54,11 @@ class IndexDocumentsCommandTest extends \EthicalJobs\Tests\Elasticsearch\TestCas
 
         foreach ($expectedIndexables as $indexable) {
             $indexer
-                ->shouldReceive('queueIndexByQuery')
+                ->shouldReceive('queueQuery')
                 ->once()
-                ->withArgs(function ($query) use ($indexable) {
-                    $this->assertInstanceOf(Builder::class, $query);
-                    $this->assertInstanceOf($indexable, $query->getModel());
-                    $this->assertEquals(
-                        (new $indexable)->getDocumentRelations(),
-                        array_keys($query->getEagerLoads())
-                    );
+                ->withArgs(function ($indexQuery) use ($indexable) {
+                    $this->assertInstanceOf(IndexQuery::class, $indexQuery);
+                    $this->assertInstanceOf($indexable, $indexQuery->indexable);
                     return true;
                 })
                 ->andReturn(null);
@@ -113,12 +78,12 @@ class IndexDocumentsCommandTest extends \EthicalJobs\Tests\Elasticsearch\TestCas
     public function it_can_queue_by_parameters()
     {
         $indexer = Mockery::mock(Indexer::class)
-            ->shouldReceive('queueIndexByQuery')
+            ->shouldReceive('queueQuery')
             ->once()
-            ->withArgs(function ($query, $processes, $chunkSize) {
-                $this->assertInstanceOf(\EthicalJobs\Tests\Elasticsearch\Fixtures\Family::class, $query->getModel());
-                $this->assertEquals(3, $processes);
-                $this->assertEquals(133, $chunkSize);
+            ->withArgs(function ($indexQuery) {
+                $this->assertEquals(133, $indexQuery->getParam('chunkSize'));
+                $this->assertEquals(3, $indexQuery->getParam('numberOfProcesses'));
+                $this->assertInstanceOf(\Tests\Fixtures\Family::class, $indexQuery->indexable);
                 return true;
             })
             ->andReturn(null)
@@ -130,7 +95,7 @@ class IndexDocumentsCommandTest extends \EthicalJobs\Tests\Elasticsearch\TestCas
             '--queue'        => true,
             '--chunk-size'   => 133,            
             '--processes'    => 3,
-            '--indexables'   => 'EthicalJobs\Tests\Elasticsearch\Fixtures\Family',
+            '--indexables'   => 'Tests\Fixtures\Family',
         ]);
     }                  
 }

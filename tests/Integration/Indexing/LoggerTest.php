@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\App;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use EthicalJobs\Elasticsearch\Indexing\Logger;
 
-class LoggerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
+class LoggerTest extends \Tests\TestCase
 {
     /**
      * @test
@@ -16,6 +16,12 @@ class LoggerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
      */
     public function it_can_log_a_message()
     {
+        $data = [
+            'foo'       => 'bar',
+            'age'       => 34,
+            'height'    => 192,
+        ];
+
         $slack = Mockery::mock(Client::class)
             ->shouldReceive('attach')
             ->once()
@@ -23,11 +29,10 @@ class LoggerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
                 'fallback'  => '',
                 'text'      => '',
                 'color'     => 'yellow',
-                'fields'    => [
-                    ['title' => 'foo','value' => 'bar'],
-                    ['title' => 'age','value' => 34],
-                    ['title' => 'height','value' => 192],
-                ],
+                'fields'    => [[
+                    'title' => '',
+                    'value' => json_encode($data, JSON_PRETTY_PRINT)
+                ]],
             ])
             ->andReturn(Mockery::self())
             ->shouldReceive('send')
@@ -39,11 +44,7 @@ class LoggerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
 
         $logger = new Logger($slack, $console);
 
-        $logger->message('Hello world!', [
-            'foo'       => 'bar',
-            'age'       => 34,
-            'height'    => 192,
-        ], 'yellow');
+        $logger->message('Hello world!', $data, 'yellow');
     } 
 
     /**
@@ -76,11 +77,11 @@ class LoggerTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
         $console = Mockery::mock(ConsoleOutput::class)
             ->shouldReceive('writeln')
             ->once()
-            ->with('<comment>Hello world!</comment>')
+            ->with('<info>Hello world!</info>')
             ->andReturn(null)
             ->shouldReceive('writeln')
             ->once()
-            ->with('<info>'.json_encode($data, JSON_PRETTY_PRINT).'</info>')
+            ->with(json_encode($data, JSON_PRETTY_PRINT).PHP_EOL)
             ->andReturn(null)            
             ->getMock();
 

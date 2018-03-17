@@ -4,6 +4,7 @@ namespace EthicalJobs\Elasticsearch;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
+use Illuminate\Database\Eloquent\Builder;
 use EthicalJobs\Foundation\Utils\Timestamp;
 
 /**
@@ -68,11 +69,8 @@ trait Document
         return [];
     }
 
-   /**
-     * Returns an instance of the indexable relation
-     *
-     * @param String $relation
-     * @return \App\Models\Interfaces\Indexable
+    /**
+     * {@inheritdoc}
      */
     public function getDocumentRelation($relation)
     {
@@ -83,6 +81,22 @@ trait Document
             return new $relation;
         }
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getIndexingQuery(): Builder
+    {
+        $query = $this
+            ->with($this->getDocumentRelations())
+            ->latest();
+
+        if (Utilities::isSoftDeletable(__CLASS__)) {
+            $query->withTrashed();
+        }
+
+        return $query;    
+    }           
 
     /**
      * Is attribute an indexable relation
@@ -145,5 +159,5 @@ trait Document
         }
 
         return $body;
-    }
+    } 
 }

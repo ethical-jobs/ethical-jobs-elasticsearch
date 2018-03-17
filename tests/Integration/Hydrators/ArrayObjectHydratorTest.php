@@ -5,9 +5,9 @@ namespace Tests\Integration\Hydrators;
 use ArrayObject;
 use Illuminate\Support\Collection;
 use EthicalJobs\Elasticsearch\Hydrators\ArrayObjectHydrator;
-use EthicalJobs\Tests\Elasticsearch\Fixtures;
+use Tests\Fixtures;
 
-class ArrayObjectHydratorTest extends \EthicalJobs\Tests\Elasticsearch\TestCase
+class ArrayObjectHydratorTest extends \Tests\TestCase
 {
     /**
      * @test

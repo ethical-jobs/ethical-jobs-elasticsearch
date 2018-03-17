@@ -4,6 +4,7 @@ namespace EthicalJobs\Elasticsearch\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use EthicalJobs\Elasticsearch\Indexing\IndexQuery;
 use EthicalJobs\Elasticsearch\Indexing\Indexer;
 use EthicalJobs\Elasticsearch\Utilities;
 use EthicalJobs\Elasticsearch\Indexable;
@@ -25,7 +26,7 @@ class IndexDocuments extends Command
     protected $signature = 'ej:es:index
                             {--chunk-size=250 : How many documents to index at once}
                             {--queue : Indexes documents via queue workers}
-                            {--processes=4 : How many queue processes to boot}
+                            {--processes=2 : How many queue processes per indexable to boot}
                             {--indexables=* : An array of indexables to index (none == all)}';
 
     /**
@@ -92,39 +93,18 @@ class IndexDocuments extends Command
      */
     protected function index(string $indexable): void
     {
-        $query = $this->getIndexableQuery($indexable);
+        $indexQuery = new IndexQuery(new $indexable);
 
-        $chunksize = $this->option('chunk-size') ?? 300;
+        $indexQuery->setChunkSize($this->option('chunk-size'));
 
-        if ($option = $this->option('queue')) {
+        if ($this->option('queue')) {
 
-            $processes = $this->option('processes') ?? 4;
+            $indexQuery->setNumberOfProcesses($this->option('processes'));
 
-            $this->indexer->queueIndexByQuery($query, $processes, $chunksize);
+            $this->indexer->queueQuery($indexQuery);
         } else {
-            $this->indexer->indexByQuery($query, $chunksize);
+            $this->indexer->indexQuery($indexQuery);
         }
-    }
-
-    /**
-     * Returns indexable query
-     *
-     * @param  string $indexable
-     * @return Illuminate\Database\Query\Builder
-     */
-    protected function getIndexableQuery(string $indexable)
-    {
-        $instance = new $indexable;
-
-        $relations = $instance->getDocumentRelations();
-
-        $query = $instance->with($relations);
-
-        if (Utilities::isSoftDeletable($indexable)) {
-            $query->withTrashed();
-        }
-
-        return $query;    
     }       
 
     /**
