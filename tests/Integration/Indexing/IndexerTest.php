@@ -101,7 +101,7 @@ class IndexerTest extends \Tests\TestCase
 
         $indexer = new Indexer($client, $index, $logger);            
 
-        $indexer->queueByQuery($indexQuery);
+        $indexer->queueQuery($indexQuery);
 
         Queue::assertPushed(ProcessIndexQuery::class, 4);        
 

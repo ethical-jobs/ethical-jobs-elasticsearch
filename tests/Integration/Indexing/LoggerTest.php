@@ -82,7 +82,7 @@ class LoggerTest extends \Tests\TestCase
             ->shouldReceive('writeln')
             ->once()
             ->with(json_encode($data, JSON_PRETTY_PRINT).PHP_EOL)
-            ->andReturn(null)            
+            ->andReturn(null)                          
             ->getMock();
 
         $logger = new Logger($slack, $console);
