@@ -17,7 +17,7 @@ class ArrayObjectHydratorTest extends \Tests\TestCase
     {
         $vehicles = factory(Fixtures\Vehicle::class, 5)->create();
 
-        $response = $this->getMockSearchResults($vehicles);
+        $response = $this->getSearchResults($vehicles);
 
         $collection = (new ArrayObjectHydrator)
             ->hydrateFromResponse($response, new Fixtures\Vehicle);
@@ -37,7 +37,7 @@ class ArrayObjectHydratorTest extends \Tests\TestCase
     {
         $vehicles = factory(Fixtures\Vehicle::class, 5)->create();
 
-        $response = $this->getMockSearchResults($vehicles);
+        $response = $this->getSearchResults($vehicles);
 
         $collection = (new ArrayObjectHydrator)
             ->hydrateFromResponse($response, new Fixtures\Vehicle);
@@ -55,7 +55,7 @@ class ArrayObjectHydratorTest extends \Tests\TestCase
     {
         $vehicles = factory(Fixtures\Vehicle::class, 5)->create();
 
-        $response = $this->getMockSearchResults($vehicles);
+        $response = $this->getSearchResults($vehicles);
 
         $collection = (new ArrayObjectHydrator)
             ->hydrateFromResponse($response, new Fixtures\Vehicle);
@@ -101,7 +101,7 @@ class ArrayObjectHydratorTest extends \Tests\TestCase
 
         $families->load($documentRelations);
 
-        $response = $this->getMockSearchResults($families);
+        $response = $this->getSearchResults($families);
 
         $collection = (new ArrayObjectHydrator)
             ->hydrateFromResponse($response, new Fixtures\Family);

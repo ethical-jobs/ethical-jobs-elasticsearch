@@ -22,7 +22,7 @@ class EloquentHydrator implements Hydrator
      *
      * @param array $response
      * @param App\Models\Interfaces\Indexable $indexable
-     * @return Illuminate\Support\Collection
+     * @return Illuminate\Database\Eloquent\Collection
      */
     public function hydrateFromResponse(array $response, $indexable)
     {

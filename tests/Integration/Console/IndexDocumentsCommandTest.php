@@ -37,7 +37,9 @@ class IndexDocumentsCommandTest extends \Tests\TestCase
 
         App::instance(Indexer::class, $indexer);
 
-        Artisan::call('ej:es:index');
+        Artisan::call('ej:es:index', [
+            '--quiet' => true,
+        ]);
     }   
 
     /**

@@ -2,10 +2,16 @@
 
 namespace EthicalJobs\Elasticsearch\Repositories;
 
+use Traversable;
 use Elasticsearch\Client;
-use ONGR\ElasticsearchDSL\Search;
 use Illuminate\Database\Eloquent\Model;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use ONGR\ElasticsearchDSL\Search;
+use ONGR\ElasticsearchDSL\Sort\FieldSort;
+use ONGR\ElasticsearchDSL\Query\TermLevel;
+use ONGR\ElasticsearchDSL\Query\Compound\BoolQuery;
+use EthicalJobs\Foundation\Storage\Repository;
+use EthicalJobs\Elasticsearch\Hydrators;
 
 /**
  * Abstract elasticsearch repository
@@ -13,7 +19,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * @author Andrew McLagan <andrew@ethicaljobs.com.au>
  */
 
-abstract class ElasticsearchRepository
+class ElasticsearchRepository implements Repository
 {
     /**
      * Elasticsearch client
@@ -61,6 +67,8 @@ abstract class ElasticsearchRepository
         $this->indexName = $indexName;
 
         $this->search = $search;
+
+        $this->asModels();
     }
 
     /**
@@ -90,7 +98,7 @@ abstract class ElasticsearchRepository
 
         $this->search->addQuery($query, BoolQuery::FILTER);        
 
-        return $this->find()->first();
+        return $this->asModels()->find()->first();
     }  
 
     /**
@@ -102,7 +110,7 @@ abstract class ElasticsearchRepository
 
         $this->search->addQuery($query, BoolQuery::FILTER);        
 
-        return $this->find()->first();
+        return $this->asModels()->find()->first();
     }     
 
     /**
@@ -128,7 +136,7 @@ abstract class ElasticsearchRepository
                 break; 
             case '=':
             default:
-                $query = new TermLevel\TermQuery($field, $value);
+                $query = new TermLevel\TermQuery($field, $value ? $value : $operator);
                 $bool = BoolQuery::FILTER;
                 break;                                             
         }
@@ -147,7 +155,7 @@ abstract class ElasticsearchRepository
 
         $this->search->addQuery($query, BoolQuery::FILTER);        
 
-        return $this->find();
+        return $this;
     }
 
     /**
@@ -205,7 +213,7 @@ abstract class ElasticsearchRepository
     /**
      * {@inheritdoc}
      */
-    public function find(): Collection
+    public function find(): Traversable
     {
         $response = $this->client->search([
             'index' => $this->indexName,

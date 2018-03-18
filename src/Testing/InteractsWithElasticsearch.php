@@ -23,7 +23,7 @@ trait InteractsWithElasticsearch
      * @param Illuminate\Support\Collection $entities
      * @return MockClient
      */
-    public function getMockSearchResults(Collection $entities)
+    public function getSearchResults(Collection $entities)
     {
         $elasticClient = new MockClient;
 
@@ -39,6 +39,20 @@ trait InteractsWithElasticsearch
 
         return $elasticClient->search();
     } 
+
+    /**
+     * Mocks empty elasticsearch results
+     *
+     * @return MockClient
+     */
+    public function getEmptySearchResults()
+    {
+        $elasticClient = new MockClient;
+
+        $elasticClient->addSearchResult('test-index', 'mock_document_type', []);
+
+        return $elasticClient->search();
+    }     
 
     /**
      * Disables ES indexable observer for testing purposes
