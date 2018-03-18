@@ -1,3 +1,8 @@
+# v1.4.0
+
+- Adding elasticsearch repositories
+- Repository tests
+
 # v1.3.10
 
 - Async query indexing fixes and refactors
