@@ -1,6 +1,7 @@
-# v1.3.9
+# v1.3.10
 
 - Async query indexing fixes and refactors
+- Serializable IndexQueries
 
 # v1.3.0
 
