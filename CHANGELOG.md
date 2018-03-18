@@ -1,4 +1,4 @@
-# v1.3.1
+# v1.3.9
 
 - Async query indexing fixes and refactors
 

@@ -2,6 +2,7 @@
 
 namespace EthicalJobs\Elasticsearch\Indexing;
 
+use Serializable;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Builder;
 use EthicalJobs\Elasticsearch\Indexable;
@@ -12,21 +13,21 @@ use EthicalJobs\Elasticsearch\Indexable;
  * @author Andrew McLagan <andrew@ethicaljobs.com.au>
  */
 
-class IndexQuery
+class IndexQuery implements Serializable
 {
     /**
      * Elastic search client
      *
      * @param \EthicalJobs\Elasticsearch\Indexable
      */
-    public $indexable;
+    public $indexable;   
 
     /**
      * Query builder instance
      *
      * @param \Illuminate\Database\Eloquent\Builder
      */
-    public $query;    
+    public $query;     
 
     /**
      * Query parameters
@@ -81,7 +82,7 @@ class IndexQuery
     {    
         $this->params['numberOfProcesses'] = $processes;
 
-        $this->params['itemsPerProcess'] = (int) ceil($this->query->count() / $processes);        
+        $this->params['itemsPerProcess'] = (int) ceil($this->query->count() / $processes);     
 
         return $this;
     }    
@@ -121,7 +122,7 @@ class IndexQuery
             $this->query->limit($limit);
         }
 
-        $this->params['numberOfItems'] = $this->query->count();
+        $this->params['numberOfItems'] = $this->query->count();   
 
         return $this;
     }    
@@ -176,5 +177,32 @@ class IndexQuery
         return array_filter($arrayed, function ($item) {
             return is_null($item) === false;
         });
-    }                                                      
+    } 
+
+    /**
+     * Serialize class instance
+     *
+     * @return string
+     */
+    public function serialize(): string
+    {
+        return serialize($this->toArray());
+    }
+
+    /**
+     * Unserialize class instance
+     *
+     * @param mixed $serialized
+     * @return void
+     */
+    public function unserialize($serialized): void
+    {
+        $params = unserialize($serialized);
+
+        $this->indexable = new $params['indexable'];
+
+        $this->query = $this->indexable->getIndexingQuery();
+
+        $this->params = array_merge($this->params, array_except($params, 'indexable'));
+    }                                                        
 }

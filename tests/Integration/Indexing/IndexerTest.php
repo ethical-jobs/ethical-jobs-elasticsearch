@@ -106,7 +106,7 @@ class IndexerTest extends \Tests\TestCase
         Queue::assertPushed(ProcessIndexQuery::class, 4);        
 
         Queue::assertPushed(ProcessIndexQuery::class, function ($event) {
-            $this->assertEquals(1000, $event->indexQuery->query->get()->count());
+            $this->assertEquals(250, $event->indexQuery->query->get()->count());
             $this->assertEquals(50, $event->indexQuery->getParam('chunkSize'));
             return true;
         });        

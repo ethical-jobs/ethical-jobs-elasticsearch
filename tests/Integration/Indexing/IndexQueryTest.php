@@ -154,5 +154,26 @@ class IndexQueryTest extends \Tests\TestCase
             ->chunk(function ($chunk) {
                 $this->assertEquals(50, $chunk->count());
             });
-    }    
+    }  
+
+    /**
+     * @test
+     * @group Integration
+     */
+    public function it_is_serializable()
+    {      
+        factory(Person::class, 500)->create();
+
+        $indexQuery = new IndexQuery(new Person);
+
+        $indexQuery
+            ->setChunkSize(50)
+            ->setNumberOfProcesses(4)
+            ->buildQuery();   
+            
+        $serialized = serialize($indexQuery);     
+        $unserialized = unserialize($serialized);
+
+        $this->assertEquals($indexQuery->toArray(), $unserialized->toArray());
+    }        
 }

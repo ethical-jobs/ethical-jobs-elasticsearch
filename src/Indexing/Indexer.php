@@ -148,6 +148,8 @@ class Indexer
      */
     public function queueQuery(IndexQuery $indexQuery): void
     {
+        $indexQuery->buildQuery();
+        
         $this->log('Queueing indexing processes', $indexQuery->toArray());     
 
         foreach ($indexQuery->getSubQueries() as $subQuery) {
