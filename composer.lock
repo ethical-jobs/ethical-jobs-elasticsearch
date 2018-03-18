@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "892ce95cf70286cf31d26457f4dec44b",
+    "content-hash": "7f4c075d2966dd3c3a4fa0d93a98283b",
     "packages": [
         {
             "name": "doctrine/inflector",
@@ -241,19 +241,20 @@
         },
         {
             "name": "erusev/parsedown",
-            "version": "1.7.0",
+            "version": "1.7.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/erusev/parsedown.git",
-                "reference": "6678d59be48c4be64eaca6ce70bea48a09488cc2"
+                "reference": "92e9c27ba0e74b8b028b111d1b6f956a15c01fc1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/erusev/parsedown/zipball/6678d59be48c4be64eaca6ce70bea48a09488cc2",
-                "reference": "6678d59be48c4be64eaca6ce70bea48a09488cc2",
+                "url": "https://api.github.com/repos/erusev/parsedown/zipball/92e9c27ba0e74b8b028b111d1b6f956a15c01fc1",
+                "reference": "92e9c27ba0e74b8b028b111d1b6f956a15c01fc1",
                 "shasum": ""
             },
             "require": {
+                "ext-mbstring": "*",
                 "php": ">=5.3.0"
             },
             "require-dev": {
@@ -282,7 +283,7 @@
                 "markdown",
                 "parser"
             ],
-            "time": "2018-02-28T11:41:37+00:00"
+            "time": "2018-03-08T01:11:30+00:00"
         },
         {
             "name": "ethical-jobs/ethical-jobs-foundation",
@@ -641,16 +642,16 @@
         },
         {
             "name": "laravel/framework",
-            "version": "v5.5.36",
+            "version": "v5.5.39",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "9283cea4a5727aaf1def60a8fa820e49df2cf874"
+                "reference": "a21ef7e51df831a7c38d24dcf8c4774ee0847526"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/9283cea4a5727aaf1def60a8fa820e49df2cf874",
-                "reference": "9283cea4a5727aaf1def60a8fa820e49df2cf874",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/a21ef7e51df831a7c38d24dcf8c4774ee0847526",
+                "reference": "a21ef7e51df831a7c38d24dcf8c4774ee0847526",
                 "shasum": ""
             },
             "require": {
@@ -661,7 +662,7 @@
                 "league/flysystem": "~1.0",
                 "monolog/monolog": "~1.12",
                 "mtdowling/cron-expression": "~1.0",
-                "nesbot/carbon": "~1.20",
+                "nesbot/carbon": "^1.24.1",
                 "php": ">=7.0",
                 "psr/container": "~1.0",
                 "psr/simple-cache": "^1.0",
@@ -771,7 +772,7 @@
                 "framework",
                 "laravel"
             ],
-            "time": "2018-03-01T13:59:00+00:00"
+            "time": "2018-03-09T17:24:53+00:00"
         },
         {
             "name": "league/flysystem",
@@ -1141,20 +1142,20 @@
         },
         {
             "name": "nesbot/carbon",
-            "version": "1.23.0",
+            "version": "1.24.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/briannesbitt/Carbon.git",
-                "reference": "4a874a39b2b00d7e0146cd46fab6f47c41ce9e65"
+                "reference": "bba6c6e410c6b4317e37a9474aeaa753808c3875"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/4a874a39b2b00d7e0146cd46fab6f47c41ce9e65",
-                "reference": "4a874a39b2b00d7e0146cd46fab6f47c41ce9e65",
+                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/bba6c6e410c6b4317e37a9474aeaa753808c3875",
+                "reference": "bba6c6e410c6b4317e37a9474aeaa753808c3875",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.3.0",
+                "php": ">=5.3.9",
                 "symfony/translation": "~2.6 || ~3.0 || ~4.0"
             },
             "require-dev": {
@@ -1190,7 +1191,7 @@
                 "datetime",
                 "time"
             ],
-            "time": "2018-02-28T09:22:05+00:00"
+            "time": "2018-03-10T10:10:14+00:00"
         },
         {
             "name": "ongr/elasticsearch-dsl",
@@ -1612,27 +1613,27 @@
         },
         {
             "name": "rollbar/rollbar",
-            "version": "v1.4.0",
+            "version": "v1.4.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/rollbar/rollbar-php.git",
-                "reference": "9a626a08a1293b2ad648521a0b4285b13b28fe23"
+                "reference": "a9f98e2c547854ae7a5c574a2a83ae1f5399b0ba"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rollbar/rollbar-php/zipball/9a626a08a1293b2ad648521a0b4285b13b28fe23",
-                "reference": "9a626a08a1293b2ad648521a0b4285b13b28fe23",
+                "url": "https://api.github.com/repos/rollbar/rollbar-php/zipball/a9f98e2c547854ae7a5c574a2a83ae1f5399b0ba",
+                "reference": "a9f98e2c547854ae7a5c574a2a83ae1f5399b0ba",
                 "shasum": ""
             },
             "require": {
                 "ext-curl": "*",
-                "monolog/monolog": "*",
+                "monolog/monolog": "^1.23",
                 "psr/log": "^1.0.1"
             },
             "require-dev": {
                 "codeclimate/php-test-reporter": "dev-master",
                 "mockery/mockery": "0.9.*",
-                "monolog/monolog": "^1.12.0",
+                "monolog/monolog": "^1.23",
                 "packfire/php5.3-compat": "*",
                 "phpmd/phpmd": "@stable",
                 "phpunit/phpunit": "4.8.*",
@@ -1668,7 +1669,7 @@
                 "logging",
                 "monitoring"
             ],
-            "time": "2018-02-06T06:19:04+00:00"
+            "time": "2018-03-17T12:23:55+00:00"
         },
         {
             "name": "rollbar/rollbar-laravel",
@@ -3433,16 +3434,16 @@
         },
         {
             "name": "orchestra/testbench-core",
-            "version": "v3.5.9",
+            "version": "v3.5.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/orchestral/testbench-core.git",
-                "reference": "997a5dfade0cfb9c88d5e1f2bf4ff76900311333"
+                "reference": "09a57dc446a24fd19a75ff57b679b86094251f8e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/orchestral/testbench-core/zipball/997a5dfade0cfb9c88d5e1f2bf4ff76900311333",
-                "reference": "997a5dfade0cfb9c88d5e1f2bf4ff76900311333",
+                "url": "https://api.github.com/repos/orchestral/testbench-core/zipball/09a57dc446a24fd19a75ff57b679b86094251f8e",
+                "reference": "09a57dc446a24fd19a75ff57b679b86094251f8e",
                 "shasum": ""
             },
             "require": {
@@ -3495,7 +3496,7 @@
                 "orchestral",
                 "testing"
             ],
-            "time": "2018-02-20T04:07:40+00:00"
+            "time": "2018-03-13T02:35:58+00:00"
         },
         {
             "name": "phar-io/manifest",
@@ -4920,7 +4921,7 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^7.0"
+        "php": ">=7.1"
     },
     "platform-dev": []
 }

@@ -12,13 +12,6 @@ abstract class TestCase extends \Orchestra\Testbench\TestCase
 	use InteractsWithElasticsearch;
 
 	/**
-	 * Enables elasticsearch observer
-	 *
-	 * @var bool
-	 */
-	protected $enableElasticsearchObserver = false;
-
-	/**
 	 * Setup the test environment.
      *
      * @return void
