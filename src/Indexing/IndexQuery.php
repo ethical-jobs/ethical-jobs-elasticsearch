@@ -68,14 +68,16 @@ class IndexQuery
 
         $counter = 1;
 
-        $this->chunks->split($numberOfProcesses)->each(function ($processChunks) use(&$counter, $numberOfProcesses) {
-            $subQuery = clone $this;
-            $subQuery
-                ->setChunks($processChunks)
-                ->setParam('currentProcess', "$counter/$numberOfProcesses");
-            ProcessIndexQuery::dispatch($subQuery);
-            $counter++;
-        });
+        $this->chunks
+            ->split($numberOfProcesses)
+            ->each(function ($processChunks) use(&$counter, $numberOfProcesses) {
+                $subQuery = clone $this;
+                $subQuery
+                    ->setChunks($processChunks)
+                    ->setParam('currentProcess', "$counter/$numberOfProcesses");
+                ProcessIndexQuery::dispatch($subQuery);
+                $counter++;
+            });
     }       
 
     /**

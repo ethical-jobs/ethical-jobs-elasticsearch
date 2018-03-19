@@ -84,14 +84,15 @@ class Logger
     /**
      * Progresses logging of an index query
      *
-     * @var int $itemsIndexed
      * @return void
      */
-    public function progress(int $itemsIndexed): void
+    public function progress(): void
     {
-        $this->count += $itemsIndexed;
+        $this->count++;
 
-        $this->log('Indexing progressed');
+        if ($this->count % 4 == 0) {
+            $this->log('Indexing progressed');
+        }
     }    
 
     /**

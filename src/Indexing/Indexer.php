@@ -107,7 +107,7 @@ class Indexer
     {
         $this->logger->start($indexQuery);
 
-        $indexQuery->chunk(function($chunk) {
+        $indexQuery->chunk(function($chunk, $index) {
 
             $response = $this->bulkRequest($chunk);
 
@@ -116,7 +116,7 @@ class Indexer
                 throw new IndexingException('Invalid request parameters');
             }
 
-            $this->logger->progress($chunk->count());
+            $this->logger->progress();
         });
 
         $this->logger->finish();
