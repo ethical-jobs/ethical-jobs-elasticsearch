@@ -168,10 +168,12 @@ class Logger
      */
     protected function getStats(): array
     {
+        $time = ceil(microtime(true) - $this->startTime);
+
         return array_filter([
             'indexable' => get_class($this->indexQuery->indexable),    
             'progress'  => $this->count.'/'.$this->indexQuery->getParam('numberOfChunks'),
-            'duration'  => ceil(microtime(true) - $this->startTime).' seconds',     
+            'duration'  => $time > 60 ? ceil($time / 60).' minutes' : $time.' seconds',
             'process'   => [
                 'chunkSize'     => $this->indexQuery->getParam('chunkSize'),
                 'proccessNum'   => $this->indexQuery->getParam('currentProcess'),

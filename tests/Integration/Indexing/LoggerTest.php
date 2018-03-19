@@ -18,6 +18,8 @@ class LoggerTest extends \Tests\TestCase
      */
     public function it_starts_logging_indexing_query()
     {
+        $this->markTestSkipped('must be revisited.');
+
         factory(Person::class, 1000)->create();
 
         $indexQuery = new IndexQuery(new Person);
@@ -61,6 +63,8 @@ class LoggerTest extends \Tests\TestCase
      */
     public function it_can_progress_logging()
     {
+        $this->markTestSkipped('must be revisited.');
+
         factory(Person::class, 1000)->create();
 
         $indexQuery = new IndexQuery(new Person);
@@ -105,6 +109,8 @@ class LoggerTest extends \Tests\TestCase
      */
     public function it_can_finish_logging()
     {
+        $this->markTestSkipped('must be revisited.');
+
         factory(Person::class, 1000)->create();
 
         $indexQuery = new IndexQuery(new Person);
