@@ -9,6 +9,13 @@ use EthicalJobs\Elasticsearch\Indexing\Indexer;
 
 class IndexableObserverTest extends \Tests\TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withElasticsearchObserver();
+    }
+
     /**
      * @test
      * @group Integration

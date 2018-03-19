@@ -1,4 +1,4 @@
-# v1.4.0
+# v1.4.1
 
 - Adding elasticsearch repositories
 - Repository tests

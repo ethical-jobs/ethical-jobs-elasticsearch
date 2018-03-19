@@ -2,7 +2,6 @@
 
 namespace EthicalJobs\Elasticsearch\Indexing;
 
-use Serializable;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Builder;
 use EthicalJobs\Elasticsearch\Indexable;
@@ -13,7 +12,7 @@ use EthicalJobs\Elasticsearch\Indexable;
  * @author Andrew McLagan <andrew@ethicaljobs.com.au>
  */
 
-class IndexQuery implements Serializable
+class IndexQuery
 {
     /**
      * Elastic search client
@@ -23,25 +22,22 @@ class IndexQuery implements Serializable
     public $indexable;   
 
     /**
-     * Query builder instance
+     * Chunks (query params that define a chunk)
      *
-     * @param \Illuminate\Database\Eloquent\Builder
+     * @var Collection
      */
-    public $query;     
+    protected $chunks;      
 
     /**
-     * Query parameters
+     * Index query params
      *
-     * @param array
+     * @var array
      */
     protected $params = [
-        'chunkSize'         => null,
-        'numberOfItems'     => null,
-        'numberOfChunks'    => null,
         'numberOfProcesses' => null,
-        'itemsPerProcess'   => null,
-        'processOffset'     => null,
-        'process'           => null,
+        'currentProcess'    => null,
+        'numberOfChunks'    => null,
+        'chunkSize'         => null,
     ];       
 
     /**
@@ -54,155 +50,125 @@ class IndexQuery implements Serializable
     {
         $this->indexable = $indexable;
 
-        $this->query = $indexable->getIndexingQuery();
-    }    
+        $this->chunks = new Collection;
+    }     
 
     /**
-     * Set the query chunk size for indexing
+     * Split query into processes
      *
+     * @param int $numberOfProcesses
      * @param int $chunkSize
-     * @return $this
+     * @return void
      */
-    public function setChunkSize(int $chunkSize): IndexQuery
-    {    
-        $this->params['chunkSize'] = $chunkSize;
-
-        $this->params['numberOfChunks'] = (int) ceil($this->query->count() / $chunkSize);
-
-        return $this;
-    }
-
-    /**
-     * Set the number of processes for multi-process indexing
-     *
-     * @param int $processes
-     * @return $this
-     */
-    public function setNumberOfProcesses(int $processes): IndexQuery
-    {    
-        $this->params['numberOfProcesses'] = $processes;
-
-        $this->params['itemsPerProcess'] = (int) ceil($this->query->count() / $processes);     
-
-        return $this;
-    }    
-
-    /**
-     * Splits a query into process subqueries
-     *
-     * @return Illuminate\Support\Collection
-     */
-    public function getSubQueries(): Collection
+    public function split(int $numberOfProcesses, int $chunkSize): void
     {
-        $subQueries = collect([]);
+        $this->setParam('numberOfProcesses', $numberOfProcesses);
 
-        for ($process = 1; $process <= $this->params['numberOfProcesses']; $process++) {
+        $this->makeChunks($chunkSize);
 
+        $counter = 1;
+
+        $this->chunks->split($numberOfProcesses)->each(function ($processChunks) use(&$counter, $numberOfProcesses) {
             $subQuery = clone $this;
-            $subQuery->setParam('processOffset', ($process - 1) * $this->params['itemsPerProcess']);
-            $subQuery->setParam('process', $process.'/'.$this->params['numberOfProcesses']);
-            $subQueries->push($subQuery);
-        }
-
-        return $subQueries;
-    } 
-
-    /**
-     * Build the underlying query builder instance
-     *
-     * @return $this
-     */
-    public function buildQuery(): IndexQuery
-    {
-        if ($offset = $this->getParam('processOffset')) {
-            $this->query->offset($offset);
-        }
-
-        if ($limit = $this->getParam('itemsPerProcess')) {
-            $this->query->limit($limit);
-        }
-
-        $this->params['numberOfItems'] = $this->query->count();   
-
-        return $this;
-    }    
+            $subQuery
+                ->setChunks($processChunks)
+                ->setParam('currentProcess', "$counter/$numberOfProcesses");
+            ProcessIndexQuery::dispatch($subQuery);
+            $counter++;
+        });
+    }       
 
     /**
-     * Chunks the query
+     * Chunks an indexable's indexing query
      *
      * @param callable $callback
      * @return void
      */
     public function chunk(callable $callback): void
     {
-        $this->query->chunk($this->getParam('chunkSize'), $callback);
-    }       
+        $index = 0;
+
+        $this->chunks->each(function($params) use($callback, &$index) {
+            $nextChunk = $this->indexable
+                ->getIndexingQuery()
+                ->offset($params['offset'])
+                ->limit($params['limit'])
+                ->get();
+            $callback($nextChunk, $index);
+            $index++;
+        });
+    }   
 
     /**
-     * Get query a param
+     * Divides an indexable into query chunks
      *
-     * @param string $param
-     * @return mixed
-     */
-    public function getParam(string $param)
-    {
-        return $this->params[$param] ?? null;
-    }      
-
-    /**
-     * Set query a param
-     *
-     * @param string $param
-     * @param mixed $value
+     * @param int $chunkSize
      * @return $this
      */
-    public function setParam(string $param, $value)
+    public function makeChunks(int $chunkSize): IndexQuery
     {
-        $this->params[$param] = $value;
+        $count = $this->indexable->getIndexingQuery()->count();
+        $numberOfChunks = (int) ceil($count / $chunkSize); 
+
+        for ($chunkNum = 1; $chunkNum <= $numberOfChunks; $chunkNum++) {
+            $isLastChunk = $chunkNum === $numberOfChunks;
+            $this->chunks->push([
+                'offset' => ($chunkNum - 1) * $chunkSize, // Pagination algorithm
+                'limit'  => $isLastChunk ? PHP_INT_MAX : $chunkSize, // Encompass all records
+            ]);
+        }
+
+        $this->setParam('numberOfChunks', $this->chunks->count());
+        $this->setParam('chunkSize', $chunkSize);
 
         return $this;
     }       
 
     /**
-     * Arrayable interface
+     * Sets the query chunks
      *
-     * @return array
+     * @param Collection $chunks
+     * @return IndexQuery
      */
-    public function toArray(): array
+    public function setChunks(Collection $chunks): IndexQuery
     {
-        $arrayed = array_merge([
-            'indexable' => get_class($this->indexable),
-        ], $this->params);
+        $this->chunks = $chunks;
 
-        return array_filter($arrayed, function ($item) {
-            return is_null($item) === false;
-        });
-    } 
+        return $this;
+    }       
 
     /**
-     * Serialize class instance
+     * Returns the query chunks
      *
-     * @return string
+     * @return Collection
      */
-    public function serialize(): string
+    public function getChunks(): Collection
     {
-        return serialize($this->toArray());
-    }
+        return $this->chunks;
+    }     
 
     /**
-     * Unserialize class instance
+     * Sets a query param
      *
-     * @param mixed $serialized
-     * @return void
+     * @param string $name
+     * @param mixed $value
+     * @return IndexQuery
      */
-    public function unserialize($serialized): void
+    public function setParam(string $name, $value): IndexQuery
     {
-        $params = unserialize($serialized);
+        $this->params[$name] = $value;
 
-        $this->indexable = new $params['indexable'];
+        return $this;
+    }       
 
-        $this->query = $this->indexable->getIndexingQuery();
-
-        $this->params = array_merge($this->params, array_except($params, 'indexable'));
-    }                                                        
+    /**
+     * Returns a query param
+     *
+     * @var string $paramPath
+     * @return mixed
+     */
+    public function getParam(string $paramPath)
+    {
+        return array_get($this->params, $paramPath);
+    }                                                                 
 }

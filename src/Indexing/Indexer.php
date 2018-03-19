@@ -5,8 +5,6 @@ namespace EthicalJobs\Elasticsearch\Indexing;
 use Elasticsearch\Client;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Builder;
-use Symfony\Component\Console\Helper\ProgressBar;
-use Symfony\Component\Console\Output\ConsoleOutput;
 use EthicalJobs\Elasticsearch\Exceptions\IndexingException;
 use EthicalJobs\Elasticsearch\Indexable;
 use EthicalJobs\Elasticsearch\Utilities;
@@ -68,19 +66,16 @@ class Indexer
      */
     public function indexDocument(Indexable $indexable)
     {
-        $this->log('Indexing document', [
+        $params = [
             'index'     => $this->index->getIndexName(),
             'id'        => $indexable->getDocumentKey(),
             'type'      => $indexable->getDocumentType(),
             'body'      => $indexable->getDocumentTree(),
-        ]);
+        ];
 
-        return $this->client->index([
-            'index'     => $this->index->getIndexName(),
-            'id'        => $indexable->getDocumentKey(),
-            'type'      => $indexable->getDocumentType(),
-            'body'      => $indexable->getDocumentTree(),
-        ]);
+        $this->logger->log('Indexing document', $params);
+
+        return $this->client->index($params);
     }
 
     /**
@@ -91,18 +86,15 @@ class Indexer
      */
     public function deleteDocument(Indexable $indexable)
     {
-        $this->log('Deleteing document', [
+        $params = [
             'index'     => $this->index->getIndexName(),
             'id'        => $indexable->getDocumentKey(),
             'type'      => $indexable->getDocumentType(),
-            'body'      => $indexable->getDocumentTree(),
-        ]);
+        ];
 
-        return $this->client->delete([
-            'index'     => $this->index->getIndexName(),
-            'id'        => $indexable->getDocumentKey(),
-            'type'      => $indexable->getDocumentType(),
-        ]);
+        $this->logger->log('Deleteing document', $params);
+
+        return $this->client->delete($params);
     }    
 
     /**
@@ -113,49 +105,22 @@ class Indexer
      */
     public function indexQuery(IndexQuery $indexQuery): void
     {
-        $start = microtime(true);
+        $this->logger->start($indexQuery);
 
-        $indexQuery->buildQuery();
-
-        $this->log('Indexing by query', $indexQuery->toArray());
-
-        $progress = new ProgressBar(new ConsoleOutput, $indexQuery->getParam('numberOfChunks'));
-
-        $indexQuery->chunk(function($chunk) use($progress) {
+        $indexQuery->chunk(function($chunk) {
 
             $response = $this->bulkRequest($chunk);
 
             if (Utilities::isResponseValid($response) === false) {
-                $this->log('Indexing error', Utilities::getResponseErrors($response));
+                $this->logger->log('Indexing error', Utilities::getResponseErrors($response));
                 throw new IndexingException('Invalid request parameters');
             }
 
-            $progress->advance();
+            $this->logger->progress($chunk->count());
         });
 
-        $this->log('Indexing complete', array_merge([
-            'timeSpentIndexing' => microtime(true) - $start.' seconds',
-        ], $indexQuery->toArray()));
-
-        $progress->finish();
-    }
-
-    /**
-     * Queues and indexable for indexing
-     *
-     * @param \EthicalJobs\Elasticsearch\Indexing\IndexQuery $indexQuery
-     * @return void
-     */
-    public function queueQuery(IndexQuery $indexQuery): void
-    {
-        $indexQuery->buildQuery();
-        
-        $this->log('Queueing indexing processes', $indexQuery->toArray());     
-
-        foreach ($indexQuery->getSubQueries() as $subQuery) {
-            ProcessIndexQuery::dispatch($indexQuery);
-        }
-    }    
+        $this->logger->finish();
+    } 
 
     /**
      * Creates a request from a collection of indexables
@@ -182,20 +147,5 @@ class Indexer
         }
 
         return $this->client->bulk($params);
-    }
-
-    /**
-     * Logs activity
-     *
-     * @param string $message
-     * @param array $data
-     * @param string $color
-     * @return Void
-     */
-    protected function log(string $message = '', array $data = []): void
-    {
-        $processId = app()->environment()."::".gethostname()."::".getmypid();
-        
-        $this->logger->message("$processId - $message", $data);
     }
 }

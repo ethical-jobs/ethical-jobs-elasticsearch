@@ -4,12 +4,13 @@ namespace Tests;
 
 use Orchestra\Database\ConsoleServiceProvider;
 use EthicalJobs\Elasticsearch\Testing\InteractsWithElasticsearch;
+use EthicalJobs\Foundation\Testing\ExtendsAssertions;
 use EthicalJobs\Elasticsearch\ServiceProvider;
 use Tests\Fixtures;
 
 abstract class TestCase extends \Orchestra\Testbench\TestCase
 {
-	use InteractsWithElasticsearch;
+	use InteractsWithElasticsearch, ExtendsAssertions;
 
 	/**
 	 * Setup the test environment.

@@ -4,9 +4,8 @@ namespace EthicalJobs\Elasticsearch\Testing;
 
 use Mockery;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Artisan;
 use M6Web\Component\ElasticsearchMock\Client as MockClient;
+use EthicalJobs\Elasticsearch\IndexableObserver;
 use EthicalJobs\Elasticsearch\Indexing\Indexer;
 
 /**
@@ -61,8 +60,20 @@ trait InteractsWithElasticsearch
      */
     public function withoutElasticsearchObserver(): void
     {
-        $indexer = Mockery::mock(Indexer::class)->shouldIgnoreMissing();
-
-        App::instance(Indexer::class, $indexer);
+        $this->app->bind(IndexableObserver::class, function(){
+            return Mockery::mock(IndexableObserver::class)->shouldIgnoreMissing();
+        });  
     }     
+
+    /**
+     * Enable ES indexable observer for testing purposes
+     *
+     * @return void
+     */
+    public function withElasticsearchObserver(): void
+    {
+        $this->app->bind(IndexableObserver::class, function(){
+            return new IndexableObserver(resolve(Indexer::class));
+        });  
+    }       
 }

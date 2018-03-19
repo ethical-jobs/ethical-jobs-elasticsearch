@@ -8,7 +8,7 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 use EthicalJobs\Elasticsearch\Utilities;
 
 /**
- * Logs indexing operations
+ * Logs index queries
  *
  * @author Andrew McLagan <andrew@ethicaljobs.com.au>
  */
@@ -27,7 +27,28 @@ class Logger
      *
      * @param \Symfony\Component\Console\Output\ConsoleOutput
      */
-    private $console;         
+    private $console;  
+
+    /**
+     * Index query instance
+     *
+     * @var IndexQuery
+     */
+    protected $indexQuery;        
+
+    /**
+     * Start time in micro seconds
+     *
+     * @param int
+     */
+    private $startTime;  
+
+    /**
+     * Current chunk count
+     *
+     * @param int
+     */
+    private $count;                    
 
     /**
      * Constructor
@@ -44,38 +65,83 @@ class Logger
     }
 
     /**
-     * Logs a slack message
+     * Starts logging an index query
+     *
+     * @param EthicalJobs\Elasticsearch\Indexing\IndexQuery $indexQuery
+     * @return void
+     */
+    public function start(IndexQuery $indexQuery): void
+    {
+        $this->startTime = microtime(true);
+
+        $this->indexQuery = $indexQuery;
+
+        $this->count = 0;
+
+        $this->log('Indexing started');
+    }
+
+    /**
+     * Progresses logging of an index query
+     *
+     * @var int $itemsIndexed
+     * @return void
+     */
+    public function progress(int $itemsIndexed): void
+    {
+        $this->count += $itemsIndexed;
+
+        $this->log('Indexing progressed');
+    }    
+
+    /**
+     * Completes logging an index query
+     *
+     * @return void
+     */
+    public function finish(): void
+    {
+        $this->log('Indexing completed');
+    }    
+
+    /**
+     * Sends a log
      *
      * @param string $message
      * @param array $data
-     * @param string $color
      * @return void
      */
-    public function message(string $message, array $data = [], string $color = '#86f442'): void
+    public function log(string $message, $data = []): void
     {
-        $this->slack(...func_get_args());
+        if (empty($data)) {
+            $data = $this->getStats();
+        }
+
+        $this->slack($message, $data);
 
         if (App::runningUnitTests() === false) {
-            $this->console(...func_get_args());
+            $this->console($message, $data);
         }
-    }
+    }    
 
     /**
      * Logs a slack message
      *
      * @param string $message
      * @param array $data
-     * @param string $color
      * @return void
      */
-    protected function slack(string $message, array $data = [], string $color = '#86f442'): void
+    protected function slack(string $message, array $data = []): void
     {
         $this->slack
             ->attach([
-                'fallback'  => '',
-                'text'      => '',
-                'color'     => $color,
-                'fields'    => $this->toFields($data),
+                'fallback' => '', 'text' => '', 'color' => 'green',
+                'fields'    => [
+                    [
+                        'title' => '',
+                        'value' => '```'.$this->encodeArray($data).'```',
+                    ],
+                ],
             ])
             ->send($message);
     }    
@@ -85,10 +151,9 @@ class Logger
      *
      * @param string $message
      * @param array $data
-     * @param string $color
      * @return void
      */
-    protected function console(string $message, array $data = [], string $color = '#86f442'): void
+    protected function console(string $message, array $data = []): void
     {
         $this->console->writeln("<info>$message</info>");
 
@@ -96,21 +161,24 @@ class Logger
     }        
 
     /**
-     * Converts a keyed array to attachment fields
+     * Returns stats on the IndexQuery
      *
-     * @param array $data
      * @return array
      */
-    protected function toFields(array $data): array
+    protected function getStats(): array
     {
-        $fields = [];
-
-        $fields[] = [
-            'title' => '',
-            'value' => $this->encodeArray($data),
-        ];
-
-        return $fields;
+        return array_filter([
+            'indexable' => get_class($this->indexQuery->indexable),    
+            'progress'  => $this->count.'/'.$this->indexQuery->getParam('numberOfChunks'),
+            'duration'  => ceil(microtime(true) - $this->startTime).' seconds',     
+            'process'   => [
+                'chunkSize'     => $this->indexQuery->getParam('chunkSize'),
+                'proccessNum'   => $this->indexQuery->getParam('currentProcess'),
+                'processId'     => getmypid(),
+                'hostName'      => gethostname(),
+                'environment'   => app()->environment(),
+            ],
+        ]);
     }
 
     /**

@@ -287,16 +287,16 @@
         },
         {
             "name": "ethical-jobs/ethical-jobs-foundation",
-            "version": "v1.1.3",
+            "version": "v1.2.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ethical-jobs/ethical-jobs-foundation-php.git",
-                "reference": "ac9e777574e997f6a7dd102b2914706764718d5c"
+                "reference": "2c0c72c8761fec25b3134e5b664b687dca748468"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ethical-jobs/ethical-jobs-foundation-php/zipball/ac9e777574e997f6a7dd102b2914706764718d5c",
-                "reference": "ac9e777574e997f6a7dd102b2914706764718d5c",
+                "url": "https://api.github.com/repos/ethical-jobs/ethical-jobs-foundation-php/zipball/2c0c72c8761fec25b3134e5b664b687dca748468",
+                "reference": "2c0c72c8761fec25b3134e5b664b687dca748468",
                 "shasum": ""
             },
             "require": {
@@ -355,7 +355,7 @@
                 "foundation",
                 "laravel"
             ],
-            "time": "2018-03-18T20:16:21+00:00"
+            "time": "2018-03-19T17:41:12+00:00"
         },
         {
             "name": "guzzlehttp/guzzle",

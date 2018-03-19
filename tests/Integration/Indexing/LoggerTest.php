@@ -6,7 +6,9 @@ use Mockery;
 use Maknz\Slack\Client;
 use Illuminate\Support\Facades\App;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use EthicalJobs\Elasticsearch\Indexing\IndexQuery;
 use EthicalJobs\Elasticsearch\Indexing\Logger;
+use Tests\Fixtures\Person;
 
 class LoggerTest extends \Tests\TestCase
 {
@@ -14,55 +16,56 @@ class LoggerTest extends \Tests\TestCase
      * @test
      * @group Integration
      */
-    public function it_can_log_a_message()
+    public function it_starts_logging_indexing_query()
     {
-        $data = [
-            'foo'       => 'bar',
-            'age'       => 34,
-            'height'    => 192,
-        ];
+        factory(Person::class, 1000)->create();
+
+        $indexQuery = new IndexQuery(new Person);
+
+        $indexQuery->makeChunks(100);
 
         $slack = Mockery::mock(Client::class)
             ->shouldReceive('attach')
             ->once()
-            ->with([
-                'fallback'  => '',
-                'text'      => '',
-                'color'     => 'yellow',
-                'fields'    => [[
-                    'title' => '',
-                    'value' => json_encode($data, JSON_PRETTY_PRINT)
-                ]],
-            ])
+            ->withArgs(function ($params) {
+                $this->assertTrue(array_has($params, [
+                    'fallback','text','color','fields.0.title'
+                ]));
+                $decoded = json_decode(str_replace('`', '', $params['fields'][0]['value']));
+                $this->assertEquals(Person::class, $decoded->indexable);
+                $this->assertEquals('0/10', $decoded->progress);
+                $this->assertEquals(100, $decoded->process->chunkSize);
+                $this->assertEquals(null, $decoded->process->proccessNum);
+                $this->assertTrue(is_numeric($decoded->process->processId));
+                $this->assertTrue(is_string($decoded->process->hostName));
+                $this->assertEquals('testing', $decoded->process->environment);
+                return true;
+            })
             ->andReturn(Mockery::self())
             ->shouldReceive('send')
-            ->with('Hello world!')
+            ->with('Indexing started')
             ->andReturn(null)
             ->getMock();
 
-        $console = Mockery::mock(ConsoleOutput::class);
-
+        $console = Mockery::mock(ConsoleOutput::class)
+            ->shouldIgnoreMissing();
+        
         $logger = new Logger($slack, $console);
 
-        $logger->message('Hello world!', $data, 'yellow');
-    } 
+        $logger->start($indexQuery);       
+    }    
 
     /**
      * @test
      * @group Integration
      */
-    public function it_can_log_a_message_to_console_when_not_testing()
+    public function it_can_progress_logging()
     {
-        $data = [
-            'foo'       => 'bar',
-            'age'       => 34,
-            'height'    => 192,
-        ];
+        factory(Person::class, 1000)->create();
 
-        App::shouldReceive('runningUnitTests')
-            ->once()
-            ->withNoArgs()
-            ->andReturn(false);
+        $indexQuery = new IndexQuery(new Person);
+
+        $indexQuery->makeChunks(100);
 
         $slack = Mockery::mock(Client::class)
             ->shouldReceive('attach')
@@ -70,23 +73,77 @@ class LoggerTest extends \Tests\TestCase
             ->withAnyArgs()
             ->andReturn(Mockery::self())
             ->shouldReceive('send')
-            ->withAnyArgs()
-            ->andReturn(null)
+            ->with('Indexing started') 
+            ->andReturn(null)      
+
+            ->shouldReceive('attach')
+            ->once()
+            ->withArgs(function ($params) {
+                $decoded = json_decode(str_replace('`', '', $params['fields'][0]['value']));
+                $this->assertEquals('15/10', $decoded->progress);
+                return true;
+            })  
+            ->andReturn(Mockery::self())
+            ->shouldReceive('send')
+            ->with('Indexing progressed') 
+            ->andReturn(null)                              
             ->getMock();
 
         $console = Mockery::mock(ConsoleOutput::class)
-            ->shouldReceive('writeln')
-            ->once()
-            ->with('<info>Hello world!</info>')
-            ->andReturn(null)
-            ->shouldReceive('writeln')
-            ->once()
-            ->with(json_encode($data, JSON_PRETTY_PRINT).PHP_EOL)
-            ->andReturn(null)                          
-            ->getMock();
-
+            ->shouldIgnoreMissing();
+        
         $logger = new Logger($slack, $console);
 
-        $logger->message('Hello world!', $data);
+        $logger->start($indexQuery);       
+
+        $logger->progress(15); 
     }        
+
+    /**
+     * @test
+     * @group Integration
+     */
+    public function it_can_finish_logging()
+    {
+        factory(Person::class, 1000)->create();
+
+        $indexQuery = new IndexQuery(new Person);
+
+        $indexQuery->makeChunks(100);
+
+        $slack = Mockery::mock(Client::class)
+            ->shouldReceive('attach')
+            ->once()
+            ->withAnyArgs()
+            ->andReturn(Mockery::self())
+            ->shouldReceive('send')
+            ->with('Indexing started') 
+            ->andReturn(null)      
+            ->shouldReceive('attach')
+            ->once()
+            ->withAnyArgs()  
+            ->andReturn(Mockery::self())
+            ->shouldReceive('send')
+            ->with('Indexing progressed') 
+            ->andReturn(null)  
+            ->shouldReceive('attach')
+            ->once()
+            ->withAnyArgs()  
+            ->andReturn(Mockery::self())
+            ->shouldReceive('send')
+            ->with('Indexing completed') 
+            ->andReturn(null)                                           
+            ->getMock();
+
+        $console = Mockery::mock(ConsoleOutput::class)
+            ->shouldIgnoreMissing();
+        
+        $logger = new Logger($slack, $console);
+
+        $logger->start($indexQuery);       
+
+        $logger->progress(15); 
+
+        $logger->finish(); 
+    }             
 }

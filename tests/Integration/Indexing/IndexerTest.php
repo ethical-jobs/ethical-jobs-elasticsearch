@@ -51,16 +51,16 @@ class IndexerTest extends \Tests\TestCase
      */
     public function it_can_index_by_indexQuery()
     {
-        factory(Person::class, 500)->create();
+        factory(Person::class, 1000)->create();
 
         $indexQuery = (new IndexQuery(new Person))
-            ->setChunkSize(50);
+            ->makeChunks(50);
 
         $client = Mockery::mock(Client::class)
             ->shouldReceive('bulk')
-            ->times(10)
+            ->times(20)
             ->withArgs(function($params) {
-                $this->assertEquals(100, count($params['body']));
+                $this->assertEquals(100, count($params['body'])); // Two times the chunksize
                 $this->assertEquals('testing', array_get($params, 'body.0.index._index'));
                 $this->assertEquals('people', array_get($params, 'body.0.index._type'));
                 $this->assertTrue(array_has(array_get($params, 'body.1'), [
@@ -80,35 +80,4 @@ class IndexerTest extends \Tests\TestCase
 
         $indexer->indexQuery($indexQuery);
     }    
-
-    /**
-     * @test
-     * @group Integration
-     */
-    public function it_can_queue_indexing_of_IndexQueries()
-    {
-        Queue::fake();
-
-        factory(Person::class, 1000)->create();
-
-        $indexQuery = (new IndexQuery(new Person))
-            ->setChunkSize(50)
-            ->setNumberOfProcesses(4);
-
-        $client = Mockery::mock(Client::class)->shouldIgnoreMissing();
-        $index = Mockery::mock(Index::class)->shouldIgnoreMissing();
-        $logger = Mockery::mock(Logger::class)->shouldIgnoreMissing();
-
-        $indexer = new Indexer($client, $index, $logger);            
-
-        $indexer->queueQuery($indexQuery);
-
-        Queue::assertPushed(ProcessIndexQuery::class, 4);        
-
-        Queue::assertPushed(ProcessIndexQuery::class, function ($event) {
-            $this->assertEquals(250, $event->indexQuery->query->get()->count());
-            $this->assertEquals(50, $event->indexQuery->getParam('chunkSize'));
-            return true;
-        });        
-    }        
 }
