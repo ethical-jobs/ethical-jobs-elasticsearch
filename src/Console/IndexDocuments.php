@@ -3,10 +3,9 @@
 namespace EthicalJobs\Elasticsearch\Console;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use EthicalJobs\Elasticsearch\Indexing\IndexQuery;
 use EthicalJobs\Elasticsearch\Indexing\Indexer;
-use EthicalJobs\Elasticsearch\Utilities;
 use EthicalJobs\Elasticsearch\Indexable;
 use EthicalJobs\Elasticsearch\Index;
 
@@ -92,6 +91,12 @@ class IndexDocuments extends Command
      */
     protected function index(string $indexable): void
     {
+        if (Cache::get('es:es:indexing')) {
+            throw new \Exception('Indexing operation already running.');
+        }
+
+        Cache::put('es:es:indexing', true, 60);
+
         $indexQuery = new IndexQuery(new $indexable, $this->option('chunk-size'));
 
         if ($processes = $this->option('processes')) {
@@ -100,6 +105,8 @@ class IndexDocuments extends Command
         } else {
             $this->indexer->indexQuery($indexQuery);
         }
+
+        Cache::forget('es:es:indexing');
     }       
 
     /**

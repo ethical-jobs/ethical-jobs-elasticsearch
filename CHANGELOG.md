@@ -1,3 +1,7 @@
+# v1.4.8
+
+- Indexing command lock
+
 # v1.4.7
 
 - Bug fixes
