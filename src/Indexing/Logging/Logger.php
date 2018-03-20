@@ -138,11 +138,11 @@ class Logger
     protected function logIndexQuery(string $message, IndexQuery $indexQuery): void
     {
         $items = Store::all($indexQuery->uuid, [
-            'duration'              => 0,
+            'duration'              => microtime(true),
             'documents:indexed'     => 0,
-            'documents:total'       => 1,
+            'documents:total'       => $indexQuery->documentCount(),
             'processes:completed'   => 0,
-            'processes:total'       => 1,
+            'processes:total'       => $indexQuery->processCount(),
             'processes:ids'         => '',
         ]);
 
