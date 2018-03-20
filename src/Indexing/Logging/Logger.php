@@ -140,9 +140,9 @@ class Logger
         $items = Store::all($indexQuery->uuid, [
             'duration'              => 0,
             'documents:indexed'     => 0,
-            'documents:total'       => 0,
+            'documents:total'       => 1,
             'processes:completed'   => 0,
-            'processes:total'       => 0,
+            'processes:total'       => 1,
             'processes:ids'         => '',
         ]);
 
