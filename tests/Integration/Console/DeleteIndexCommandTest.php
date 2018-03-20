@@ -16,6 +16,10 @@ class DeleteIndexCommandTest extends \Tests\TestCase
     public function it_create_an_index()
     {
         $index = Mockery::mock(Index::class)
+            ->shouldReceive('getIndexName')
+            ->once()
+            ->withNoArgs()     
+            ->andReturn('test-index')           
             ->shouldReceive('delete')
             ->once()
             ->withNoArgs()

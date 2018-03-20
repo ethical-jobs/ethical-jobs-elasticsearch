@@ -1,3 +1,8 @@
+# v1.4.5
+
+- Bug fixes
+- Test suite refactor and extension
+
 # v1.4.1
 
 - Adding elasticsearch repositories

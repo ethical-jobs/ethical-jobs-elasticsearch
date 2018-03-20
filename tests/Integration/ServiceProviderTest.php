@@ -6,7 +6,7 @@ use Elasticsearch\Client;
 use Illuminate\Support\Facades\Event;
 use EthicalJobs\Elasticsearch\Index;
 use EthicalJobs\Elasticsearch\Indexing\Indexer;
-use EthicalJobs\Elasticsearch\Indexing\Logger;
+use EthicalJobs\Elasticsearch\Indexing\Logging\Logger;
 
 class ServiceProviderTest extends \Tests\TestCase
 {

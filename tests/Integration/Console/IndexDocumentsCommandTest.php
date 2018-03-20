@@ -17,30 +17,28 @@ class IndexDocumentsCommandTest extends \Tests\TestCase
      * @test
      * @group Integration
      */
-    public function it_indexes_all_indexables_by_default()
+    public function it_performs_normal_query_indexing_without_processes_param()
     {
-        $families = factory(Fixtures\Family::class, 50)->create();
+        factory(Fixtures\Family::class, 50)->create();
         factory(Fixtures\Person::class, 50)->create();
         factory(Fixtures\Vehicle::class, 50)->create();
 
-        $expectedIndexables = App::make(Index::class)
-            ->getSettings()
-            ->getIndexables();
+        $client = Mockery::mock(Client::class);
 
-        $elasticsearch = Mockery::mock(Client::class);
+        $indexer = Mockery::mock(Indexer::class)
+            ->shouldNotReceive('queueIndex')
+            ->shouldReceive('indexQuery')
+            ->times(3)
+            ->withAnyArgs()
+            ->andReturn(null)
+            ->getMock();
 
-        foreach ($expectedIndexables as $indexable) {
-            $elasticsearch
-                ->shouldReceive('bulk')
-                ->times(5)
-                ->withAnyArgs()
-                ->andReturn($this->getSearchResults($families));
-        }              
+        App::instance(Client::class, $client);
 
-        App::instance(Client::class, $elasticsearch);
+        App::instance(Indexer::class, $indexer);
 
         Artisan::call('ej:es:index', [
-            '--chunk-size' => 12,   
+            '--chunk-size' => 25,   
         ]);
     }
 
@@ -48,32 +46,37 @@ class IndexDocumentsCommandTest extends \Tests\TestCase
      * @test
      * @group Integration
      */
-    public function it_can_split_and_queue_indexing_into_processes()
+    public function it_performs_queue_query_indexing_with_processes_param()
     {
-        $families = factory(Fixtures\Family::class, 100)->create();
-        factory(Fixtures\Person::class, 100)->create();
-        factory(Fixtures\Vehicle::class, 100)->create();
+        factory(Fixtures\Family::class, 50)->create();
+        factory(Fixtures\Person::class, 50)->create();
+        factory(Fixtures\Vehicle::class, 50)->create();
 
-        $elasticsearch = Mockery::mock(Client::class)
-            ->shouldReceive('bulk')
-            ->times(30)
+        $client = Mockery::mock(Client::class);
+
+        $indexer = Mockery::mock(Indexer::class)
+            ->shouldNotReceive('indexQuery')
+            ->shouldReceive('queueQuery')
+            ->times(3)
             ->withAnyArgs()
-            ->andReturn($this->getSearchResults($families))
-            ->getMock();         
+            ->andReturn(null)
+            ->getMock();
 
-        App::instance(Client::class, $elasticsearch);
+        App::instance(Client::class, $client);
+
+        App::instance(Indexer::class, $indexer);
 
         Artisan::call('ej:es:index', [
-            '--chunk-size'   => 10,            
-            '--processes'    => 4,
+            '--chunk-size'  => 25,   
+            '--processes'   => 4,
         ]);
-    }     
+    }    
 
     /**
      * @test
      * @group Integration
      */
-    public function it_can_queue_by_parameters()
+    public function it_can_specify_indexables_to_index()
     {
         factory(Fixtures\Family::class, 20)->create();
 
@@ -81,8 +84,6 @@ class IndexDocumentsCommandTest extends \Tests\TestCase
             ->shouldReceive('indexQuery')
             ->once()
             ->withArgs(function ($indexQuery) {
-                $this->assertEquals(133, $indexQuery->getParam('chunkSize'));
-                $this->assertEquals(3, $indexQuery->getParam('numberOfProcesses'));
                 $this->assertInstanceOf(\Tests\Fixtures\Family::class, $indexQuery->indexable);
                 return true;
             })
@@ -93,7 +94,6 @@ class IndexDocumentsCommandTest extends \Tests\TestCase
 
         Artisan::call('ej:es:index', [
             '--chunk-size'   => 133,            
-            '--processes'    => 3,
             '--indexables'   => 'Tests\Fixtures\Family',
         ]);
     }                  

@@ -8,7 +8,7 @@ use Elasticsearch\ClientBuilder;
 use Illuminate\Support\Facades\Event;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use EthicalJobs\Elasticsearch\Indexing\Indexer;
-use EthicalJobs\Elasticsearch\Indexing\Logger;
+use EthicalJobs\Elasticsearch\Indexing\Logging;
 use EthicalJobs\Elasticsearch\IndexSettings;
 use EthicalJobs\Elasticsearch\Console;
 use EthicalJobs\Elasticsearch\Index;
@@ -21,13 +21,6 @@ use EthicalJobs\Elasticsearch\Index;
 
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
-    /**
-     * Indicates if loading of the provider is deferred.
-     *
-     * @var bool
-     */
-    protected $defer = true;
-
     /**
      * Config file path
      *
@@ -64,24 +57,8 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
         $this->registerIndexSingleton();
 
-        $this->registerDocumentIndexer();
-
-        $this->registerLogger();
+        $this->registerDocumentIndexing();
     }
-
-    /**
-     * Get the services provided by the provider.
-     *
-     * @return array
-     */
-    public function provides()
-    {
-        return [
-            Index::class,
-            Client::class,
-            Indexer::class,
-        ];
-    }    
 
     /**
      * Register connection instance
@@ -131,35 +108,36 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     }   
 
     /**
-     * Register document indexer
+     * Register index logging services
      *
      * @return void
      */
-    protected function registerDocumentIndexer(): void
+    protected function registerDocumentIndexing(): void
     {
+        $this->app->bind(Logging\ConsoleChannel::class, function ($app) {
+            return new Logging\ConsoleChannel(new ConsoleOutput);
+        });        
+
+        $this->app->bind(Logging\SlackChannel::class, function ($app) {
+            return new Logging\SlackChannel(new SlackClient(
+                config('elasticsearch.logging.slack.webhook'), 
+                config('elasticsearch.logging.slack')
+            ));
+        });
+
+        $this->app->bind(Logging\Logger::class, function ($app) {
+            return new Logging\Logger([
+                $app[Logging\SlackChannel::class],
+                $app[Logging\ConsoleChannel::class],
+            ]);
+        });
+
         $this->app->bind(Indexer::class, function ($app) {
             return new Indexer(
                 $app[Client::class],
-                $app[Index::class],
-                $app[Logger::class]
+                $app[Logging\Logger::class],
+                $app[Index::class]->getIndexName()
             );
-        });
-    }     
-
-    /**
-     * Register slack logger
-     *
-     * @return void
-     */
-    protected function registerLogger(): void
-    {
-        $this->app->bind(Logger::class, function ($app) {
-            $slack = new SlackClient(
-                config('elasticsearch.logging.slack.webhook'), 
-                config('elasticsearch.logging.slack')
-            );
-            $console = new ConsoleOutput;
-            return new Logger($slack, $console);
         });
     }         
 

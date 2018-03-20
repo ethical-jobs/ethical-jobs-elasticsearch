@@ -6,6 +6,7 @@ use Elasticsearch\Client;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Builder;
 use EthicalJobs\Elasticsearch\Exceptions\IndexingException;
+use EthicalJobs\Elasticsearch\Indexing\Logging\Logger;
 use EthicalJobs\Elasticsearch\Indexable;
 use EthicalJobs\Elasticsearch\Utilities;
 use EthicalJobs\Elasticsearch\Index;
@@ -26,11 +27,11 @@ class Indexer
     private $client;
 
     /**
-     * Elastic search index
+     * Elastic search index name
      *
-     * @param \EthicalJobs\Elasticsearch\Index
+     * @param string
      */
-    private $index;
+    private $indexName;
 
     /**
      * Slack logging instance
@@ -43,31 +44,31 @@ class Indexer
      * Constructor
      *
      * @param \Elasticsearch\Client $client
-     * @param \EthicalJobs\Elasticsearch\Index $index
-     * @param \EthicalJobs\Elasticsearch\Indexing\Logger $logger
+     * @param \EthicalJobs\Elasticsearch\Indexing\Logging\Logger $logger
+     * @param string $indexName
      * @return void
      */
-    public function __construct(Client $client, Index $index, Logger $logger)
+    public function __construct(Client $client, Logger $logger, string $indexName)
     {
         \DB::disableQueryLog();
 
         $this->client = $client;
 
-        $this->index = $index;
-
         $this->logger = $logger;
+
+        $this->indexName = $indexName;
     }
 
     /**
      * Indexes a indexable instance
      *
      * @param \EthicalJobs\Elasticsearch\Indexabl $indexable
-     * @return Array
+     * @return array
      */
-    public function indexDocument(Indexable $indexable)
+    public function indexDocument(Indexable $indexable): array
     {
         $params = [
-            'index'     => $this->index->getIndexName(),
+            'index'     => $this->indexName,
             'id'        => $indexable->getDocumentKey(),
             'type'      => $indexable->getDocumentType(),
             'body'      => $indexable->getDocumentTree(),
@@ -82,17 +83,17 @@ class Indexer
      * Deletes a indexable instance
      *
      * @param \EthicalJobs\Elasticsearch\Indexabl $indexable
-     * @return Array
+     * @return array
      */
-    public function deleteDocument(Indexable $indexable)
+    public function deleteDocument(Indexable $indexable): array
     {
         $params = [
-            'index'     => $this->index->getIndexName(),
+            'index'     => $this->indexName,
             'id'        => $indexable->getDocumentKey(),
             'type'      => $indexable->getDocumentType(),
         ];
 
-        $this->logger->log('Deleteing document', $params);
+        $this->logger->log('Deleting document', $params);
 
         return $this->client->delete($params);
     }    
@@ -105,9 +106,9 @@ class Indexer
      */
     public function indexQuery(IndexQuery $indexQuery): void
     {
-        $this->logger->start($indexQuery);
+        $this->logger->join($indexQuery);
 
-        $indexQuery->chunk(function($chunk, $index) {
+        $indexQuery->chunk(function($chunk, $index) use($indexQuery) {
 
             $response = $this->bulkRequest($chunk);
 
@@ -116,11 +117,26 @@ class Indexer
                 throw new IndexingException('Invalid request parameters');
             }
 
-            $this->logger->progress();
+            $this->logger->progress($indexQuery, $chunk->count());
         });
 
-        $this->logger->finish();
+        $this->logger->complete($indexQuery);
     } 
+
+    /**
+     * Queues index queries into seperate processes
+     *
+     * @param \EthicalJobs\Elasticsearch\Indexing\IndexQuery $indexQuery
+     * @return void
+     */
+    public function queueQuery(IndexQuery $indexQuery): void
+    {
+        $this->logger->start($indexQuery);
+
+        $indexQuery->split()->each(function($subQuery) {
+            ProcessIndexQuery::dispatch($subQuery);
+        });
+    }     
 
     /**
      * Creates a request from a collection of indexables
@@ -137,7 +153,7 @@ class Indexer
 
             $params['body'][] = [
                 'index' => [
-                    '_index' => $this->index->getIndexName(),
+                    '_index' => $this->indexName,
                     '_id'    => $indexable->getDocumentKey(),
                     '_type'  => $indexable->getDocumentType(),
                 ],

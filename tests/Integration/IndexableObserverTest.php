@@ -50,7 +50,7 @@ class IndexableObserverTest extends \Tests\TestCase
             ->shouldReceive('indexDocument')
             ->once()
             ->withAnyArgs()
-            ->andReturn(null)
+            ->andReturn([])
             ->shouldReceive('indexDocument')
             ->once()
             ->withArgs(function($person) {
@@ -58,7 +58,7 @@ class IndexableObserverTest extends \Tests\TestCase
                 $this->assertEquals('NagaLcM', $person->last_name);
                 return true;
             })
-            ->andReturn(null)            
+            ->andReturn([])            
             ->getMock();
 
         App::instance(Indexer::class, $indexer);
@@ -84,14 +84,14 @@ class IndexableObserverTest extends \Tests\TestCase
             ->shouldReceive('indexDocument')
             ->once()
             ->withAnyArgs()
-            ->andReturn(null)
+            ->andReturn([])
             ->shouldReceive('indexDocument')
             ->once()
             ->withArgs(function($person) {
                 $this->assertFalse(is_null($person->deleted_at));
                 return true;
             })
-            ->andReturn(null)            
+            ->andReturn([])            
             ->getMock();
 
         App::instance(Indexer::class, $indexer);
@@ -114,14 +114,14 @@ class IndexableObserverTest extends \Tests\TestCase
             ->shouldReceive('indexDocument')
             ->once()
             ->withAnyArgs()
-            ->andReturn(null)
+            ->andReturn([])
             ->shouldReceive('deleteDocument')
             ->once()
             ->withArgs(function($family) {
                 $this->assertEquals('McLagan', $family->surname);
                 return true;
             })
-            ->andReturn(null)            
+            ->andReturn([])            
             ->getMock();
 
         App::instance(Indexer::class, $indexer);
@@ -147,7 +147,7 @@ class IndexableObserverTest extends \Tests\TestCase
                 $this->assertEquals('McLagan', $person->last_name);
                 return true;
             })
-            ->andReturn(null)        
+            ->andReturn([])        
             ->getMock();
 
         App::instance(Indexer::class, $indexer);

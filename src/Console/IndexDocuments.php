@@ -25,7 +25,7 @@ class IndexDocuments extends Command
      */
     protected $signature = 'ej:es:index
                             {--chunk-size=250 : How many documents to index at once}
-                            {--processes : How many queue processes per indexable}
+                            {--processes= : How many queue processes per indexable}
                             {--indexables=* : An array of indexables to index (none == all)}';
 
     /**
@@ -92,17 +92,12 @@ class IndexDocuments extends Command
      */
     protected function index(string $indexable): void
     {
-        $indexQuery = new IndexQuery(new $indexable);
-
-        $chunkSize = $this->option('chunk-size');
+        $indexQuery = new IndexQuery(new $indexable, $this->option('chunk-size'));
 
         if ($processes = $this->option('processes')) {
-
-            $indexQuery->split($processes, $chunkSize);
+            $indexQuery->setNumberOfProcesses($processes);
+            $this->indexer->queueQuery($indexQuery);
         } else {
-
-            $indexQuery->makeChunks($chunkSize);
-
             $this->indexer->indexQuery($indexQuery);
         }
     }       
