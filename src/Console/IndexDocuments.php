@@ -25,7 +25,7 @@ class IndexDocuments extends Command
      */
     protected $signature = 'ej:es:index
                             {--chunk-size=250 : How many documents to index at once}
-                            {--processes=2 : How many queue processes per indexable}
+                            {--processes : How many queue processes per indexable}
                             {--indexables=* : An array of indexables to index (none == all)}';
 
     /**
