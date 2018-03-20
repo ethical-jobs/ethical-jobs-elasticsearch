@@ -45,4 +45,19 @@ class ProcessIndexQuery implements ShouldQueue
     {
         $indexer->indexQuery($this->indexQuery);
     }
+
+    /**
+     * Get the tags that should be assigned to the job.
+     *
+     * @return array
+     */
+    public function tags()
+    {
+        return [
+            'es', 
+            'es:indexing', 
+            'es:indexing:'.$this->indexQuery->uuid, 
+            'es:indexing:indexable:'.get_class($this->indexQuery->indexable), 
+        ];
+    }    
 }
