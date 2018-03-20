@@ -90,7 +90,7 @@ class Logger
     {
         $this->count++;
 
-        if ($this->count % 4 == 0) {
+        if ($this->count % 1000 == 0) { // log every thousand
             $this->log('Indexing progressed');
         }
     }    
@@ -172,7 +172,7 @@ class Logger
 
         return array_filter([
             'indexable' => get_class($this->indexQuery->indexable),    
-            'progress'  => $this->count.'/'.$this->indexQuery->getParam('numberOfChunks'),
+            'progress'  => $this->count.'/'.$this->indexQuery->getParam('numberOfChunks').' chunks',
             'duration'  => $time > 60 ? ceil($time / 60).' minutes' : $time.' seconds',
             'process'   => [
                 'chunkSize'     => $this->indexQuery->getParam('chunkSize'),
