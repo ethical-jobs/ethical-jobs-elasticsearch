@@ -21,7 +21,7 @@
         "ongr/elasticsearch-dsl": "^5.0",
         "elasticsearch/elasticsearch": "^5.3",
         "ethical-jobs/ethical-jobs-foundation": ">=1.0 <2.0",
-        "maknz/slack": "^1.7"        
+        "maknz/slack": "^1.7"
     },
     "require-dev": {
         "phpunit/phpunit": "~6.5",

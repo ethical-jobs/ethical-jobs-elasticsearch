@@ -3,13 +3,13 @@
 namespace Tests\Integration\Indexing\Logging;
 
 use Mockery;
-use Illuminate\Support\Facades\Cache;
 use EthicalJobs\Elasticsearch\Indexing\IndexQuery;
 use EthicalJobs\Elasticsearch\Indexing\Logging\Logger;
 use EthicalJobs\Elasticsearch\Indexing\Logging\Channel;
+use EthicalJobs\Elasticsearch\Indexing\Logging\Store;
 use Tests\Fixtures\Person;
 
-class IndexQueryLogginTest extends \Tests\TestCase
+class IndexQueryLoggingTest extends \Tests\TestCase
 {
     /**
      * @test
@@ -31,7 +31,7 @@ class IndexQueryLogginTest extends \Tests\TestCase
 
         $logger->start($indexQuery);
 
-        $expected = Cache::get(Logger::STORE_KEY.$indexQuery->uuid);
+        $expected = Store::all($indexQuery->uuid);
 
         $this->assertTrue(is_numeric($expected['duration']));
 
@@ -101,7 +101,7 @@ class IndexQueryLogginTest extends \Tests\TestCase
             $logger->join($query);
         });
 
-        $store = Cache::get(Logger::STORE_KEY.$indexQuery->uuid);
+        $store = Store::all($indexQuery->uuid);
 
         $this->assertEquals(4, count(explode(',',$store['processes:ids'])));
     }      
@@ -178,7 +178,7 @@ class IndexQueryLogginTest extends \Tests\TestCase
             ->progress($indexQuery, 15)
             ->complete($indexQuery);
 
-        $expected = Cache::get(Logger::STORE_KEY.$indexQuery->uuid);
+        $expected = Store::all($indexQuery->uuid);
 
         $this->assertEquals(1, $expected['processes:completed']);
     }   

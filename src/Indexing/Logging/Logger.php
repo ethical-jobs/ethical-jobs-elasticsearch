@@ -3,7 +3,6 @@
 namespace EthicalJobs\Elasticsearch\Indexing\Logging;
 
 use Maknz\Slack\Client;
-use Illuminate\Support\Facades\Cache;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use EthicalJobs\Elasticsearch\Indexing\IndexQuery;
 
@@ -48,7 +47,7 @@ class Logger
      */
     public function start(IndexQuery $indexQuery): Logger
     {
-        $this->storeItems($indexQuery->uuid, [
+        Store::merge($indexQuery->uuid, [
             'duration'              => microtime(true),
             'documents:indexed'     => 0,
             'documents:total'       => $indexQuery->documentCount(),
@@ -71,11 +70,13 @@ class Logger
     {
         $processId = gethostname().'::'.getmypid();
 
-        $current = $this->getItem($indexQuery->uuid, 'processes:ids');
+        $current = Store::get($indexQuery->uuid, 'processes:ids');
 
         $store = empty($current) ? $processId : $current.','.$processId;
 
-        $this->storeItems($indexQuery->uuid, ['processes:ids' => $store]);
+        Store::merge($indexQuery->uuid, [
+            'processes:ids' => $store
+        ]);
 
         return $this;
     }        
@@ -89,7 +90,7 @@ class Logger
      */
     public function progress(IndexQuery $indexQuery, int $incrementer): Logger
     {
-        $this->incrementItem($indexQuery->uuid, 'documents:indexed', $incrementer);
+        Store::increment($indexQuery->uuid, 'documents:indexed', $incrementer);
 
         $this->logIndexQuery('Indexing documents', $indexQuery);
 
@@ -104,9 +105,9 @@ class Logger
      */
     public function complete(IndexQuery $indexQuery): Logger
     {
-        $this->incrementItem($indexQuery->uuid, 'processes:completed', 1);
+        Store::increment($indexQuery->uuid, 'processes:completed', 1);
 
-        if ($this->getItem($indexQuery->uuid,'processes:completed') === $this->getItem($indexQuery->uuid,'processes:total')) {
+        if (Store::get($indexQuery->uuid,'processes:completed') === Store::get($indexQuery->uuid,'processes:total')) {
             $this->logIndexQuery('Indexing completed', $indexQuery);
         }
 
@@ -125,67 +126,7 @@ class Logger
         foreach ($this->channels as $channel) {
             $channel->log($message, $data);
         }
-    }   
-
-    /**
-     * Stores items in the cache
-     *
-     * @var string $uuid
-     * @var mixed $items
-     * @return void
-     */
-    protected function storeItems(string $uuid, array $items): void
-    {         
-        $storeKey = self::STORE_KEY.$uuid;
-
-        $items = array_merge(Cache::get($storeKey, []), $items);
-
-        Cache::put($storeKey, $items, 240);
-    }
-
-    /**
-     * Returns a store value
-     *
-     * @var string $uuid
-     * @var string $item
-     * @return mixed
-     */
-    protected function getItem(string $uuid, string $item)
-    {         
-        $storeKey = self::STORE_KEY.$uuid;
-
-        return Cache::get($storeKey)[$item] ?? null;
-    }    
-
-    /**
-     * Returns all store values
-     *
-     * @var string $uuid
-     * @return array
-     */
-    protected function getItems(string $uuid): array
-    {         
-        $storeKey = self::STORE_KEY.$uuid;
-
-        return Cache::get($storeKey, []);
-    }         
-
-    /**
-     * Increments a store value
-     *
-     * @var string $uuid
-     * @var string $key
-     * @var int $incrementer
-     * @return void
-     */
-    protected function incrementItem(string $uuid, string $item, $incrementer): void
-    {         
-        $storeKey = self::STORE_KEY.$uuid;
-
-        $current = $this->getItem($uuid, $item);
-
-        $this->storeItems($uuid, [$item => $current + $incrementer]);
-    }         
+    }     
 
     /**
      * Logs an index query
@@ -196,7 +137,14 @@ class Logger
      */
     protected function logIndexQuery(string $message, IndexQuery $indexQuery): void
     {
-        $items = $this->getItems($indexQuery->uuid);
+        $items = Store::all($indexQuery->uuid, [
+            'duration'              => 0,
+            'documents:indexed'     => 0,
+            'documents:total'       => 0,
+            'processes:completed'   => 0,
+            'processes:total'       => 0,
+            'processes:ids'         => '',
+        ]);
 
         $seconds = ceil(microtime(true) - $items['duration']);
         $minutes = $seconds > 60 ? str_pad(ceil($seconds / 60), 2, '0', STR_PAD_LEFT) : 00;
@@ -208,7 +156,7 @@ class Logger
         $percentage = ($items['processes:completed'] / $items['processes:total']) * 100;
         $processes = $items['processes:completed'].'/'.$items['processes:total'].' completed';
 
-        $processIds = isset($items['processes:ids']) ? explode(',', $items['processes:ids']) : [];
+        $processIds = empty($items['processes:ids']) ? [] : explode(',', $items['processes:ids']);
 
         $this->log($message, [
             'environment'   => app()->environment(),
