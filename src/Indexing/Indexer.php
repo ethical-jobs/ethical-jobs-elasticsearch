@@ -67,16 +67,12 @@ class Indexer
      */
     public function indexDocument(Indexable $indexable): array
     {
-        $params = [
+        return $this->client->index([
             'index'     => $this->indexName,
             'id'        => $indexable->getDocumentKey(),
             'type'      => $indexable->getDocumentType(),
             'body'      => $indexable->getDocumentTree(),
-        ];
-
-        $this->logger->log('Indexing document', $params);
-
-        return $this->client->index($params);
+        ]);
     }
 
     /**
@@ -87,15 +83,11 @@ class Indexer
      */
     public function deleteDocument(Indexable $indexable): array
     {
-        $params = [
+        return $this->client->delete([
             'index'     => $this->indexName,
             'id'        => $indexable->getDocumentKey(),
             'type'      => $indexable->getDocumentType(),
-        ];
-
-        $this->logger->log('Deleting document', $params);
-
-        return $this->client->delete($params);
+        ]);
     }    
 
     /**

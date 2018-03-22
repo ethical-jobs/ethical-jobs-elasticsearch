@@ -1,3 +1,7 @@
+# v1.5.2
+
+- Removed logging for single document indexing, too noisy.
+
 # v1.5.1
 
 - Swallowing and logging indexing obervables
