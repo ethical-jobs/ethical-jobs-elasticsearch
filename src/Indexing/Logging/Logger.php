@@ -159,7 +159,7 @@ class Logger
         $processIds = empty($items['processes:ids']) ? [] : explode(',', $items['processes:ids']);
 
         $this->log($message, [
-            'environment'   => app()->environment(),
+            'environment'   => env('EJ_ENV') ?? app()->environment(),
             'uuid'          => $indexQuery->uuid,
             'indexable'     => get_class($indexQuery->indexable),
             'duration'      => $time,

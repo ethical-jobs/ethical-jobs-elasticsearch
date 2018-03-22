@@ -1,3 +1,9 @@
+# v1.5.0
+
+- Reducing slack logging calls
+- Queing at the indexable level, not a user defined process level
+- Small logging changes
+
 # v1.4.8
 
 - Indexing command lock

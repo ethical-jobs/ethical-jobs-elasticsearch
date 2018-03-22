@@ -136,7 +136,7 @@ class IndexQuery
     }           
 
     /**
-     * Split query into processes
+     * Split query into multiple SubQueries
      *
      * @return Collection
      */

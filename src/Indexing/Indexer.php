@@ -116,8 +116,6 @@ class Indexer
                 $this->logger->log('Indexing error', Utilities::getResponseErrors($response));
                 throw new IndexingException('Invalid request parameters');
             }
-
-            $this->logger->progress($indexQuery, $chunk->count());
         });
 
         $this->logger->complete($indexQuery);
@@ -133,9 +131,7 @@ class Indexer
     {
         $this->logger->start($indexQuery);
 
-        $indexQuery->split()->each(function($subQuery) {
-            ProcessIndexQuery::dispatch($subQuery);
-        });
+        ProcessIndexQuery::dispatch($indexQuery);
     }     
 
     /**

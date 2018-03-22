@@ -68,7 +68,7 @@ class QueueQueryTest extends \Tests\TestCase
 
         $indexer->queueQuery($indexQuery);      
 
-        Queue::assertPushed(ProcessIndexQuery::class, 4);
+        Queue::assertPushed(ProcessIndexQuery::class, 1);
     }         
 
     /**

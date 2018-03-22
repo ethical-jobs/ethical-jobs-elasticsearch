@@ -46,7 +46,7 @@ class IndexDocumentsCommandTest extends \Tests\TestCase
      * @test
      * @group Integration
      */
-    public function it_performs_queue_query_indexing_with_processes_param()
+    public function it_queues_index_queries_when_queue_param_present()
     {
         factory(Fixtures\Family::class, 50)->create();
         factory(Fixtures\Person::class, 50)->create();
@@ -68,7 +68,7 @@ class IndexDocumentsCommandTest extends \Tests\TestCase
 
         Artisan::call('ej:es:index', [
             '--chunk-size'  => 25,   
-            '--processes'   => 4,
+            '--queue'       => true,
         ]);
     }    
 
