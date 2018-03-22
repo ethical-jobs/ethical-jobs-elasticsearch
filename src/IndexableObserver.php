@@ -2,6 +2,7 @@
 
 namespace EthicalJobs\Elasticsearch;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
 use EthicalJobs\Elasticsearch\Events;
 use EthicalJobs\Elasticsearch\Utilities;
@@ -41,7 +42,7 @@ class IndexableObserver
      */
     public function created(Model $indexable)
     {
-        $this->indexer->indexDocument($indexable); 
+        $this->indexDocument($indexable); 
     }
 
     /**
@@ -52,7 +53,7 @@ class IndexableObserver
      */
     public function updated(Model $indexable)
     {
-        $this->indexer->indexDocument($indexable); 
+        $this->indexDocument($indexable); 
     }
 
     /**
@@ -64,9 +65,9 @@ class IndexableObserver
     public function deleted(Model $indexable)
     {
         if (Utilities::isSoftDeletable($indexable)) { 
-            $this->indexer->indexDocument($indexable); 
+            $this->indexDocument($indexable); 
         } else {
-            $this->indexer->deleteDocument($indexable);   
+            $this->deleteDocument($indexable);   
         }
     }
 
@@ -78,6 +79,36 @@ class IndexableObserver
      */
     public function restored(Model $indexable)
     {
-        $this->indexer->indexDocument($indexable); 
+        $this->indexDocument($indexable); 
     }
+
+    /**
+     * Executes index action. Swallow and log.
+     *
+     * @param Illuminate\Database\Eloquent\Model $indexable
+     * @return void
+     */
+    protected function indexDocument(Model $indexable)
+    {
+        try {
+            $this->indexer->indexDocument($indexable); 
+        } catch (\Exception $exception) {
+            Log::critical("ej:es:indexing - : ".$exception->getMessage(), $indexable->toArray());
+        }
+    }    
+
+    /**
+     * Executes delete action. Swallow and log.
+     *
+     * @param Illuminate\Database\Eloquent\Model $indexable
+     * @return void
+     */
+    protected function deleteDocument(Model $indexable)
+    {
+        try {
+            $this->indexer->deleteDocument($indexable); 
+        } catch (\Exception $exception) {
+            Log::critical("ej:es:deleting - : ".$exception->getMessage(), $indexable->toArray());
+        }
+    }        
 }

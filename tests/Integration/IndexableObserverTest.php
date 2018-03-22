@@ -4,6 +4,7 @@ namespace Tests\Integration;
 
 use Mockery;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Log;
 use Tests\Fixtures;
 use EthicalJobs\Elasticsearch\Indexing\Indexer;
 
@@ -160,5 +161,37 @@ class IndexableObserverTest extends \Tests\TestCase
         $person->delete();
 
         $person->restore();
-    }                     
+    }     
+
+    /**
+     * @test
+     * @group Integration
+     */
+    public function it_swallows_exceptions_and_logs_them()
+    {
+        Log::shouldReceive('critical')
+            ->times(4)
+            ->withAnyArgs()
+            ->andReturn(null);
+
+        $indexer = Mockery::mock(Indexer::class)
+            ->shouldReceive('indexDocument')
+            ->times(4)
+            ->withAnyArgs()
+            ->andThrow(\Exception::class)
+            ->getMock();
+
+        App::instance(Indexer::class, $indexer);
+
+        $person = factory(Fixtures\Person::class)->create();
+
+        $person->update([
+            'first_name'    => 'Werdna',
+            'last_name'     => 'NagaLcM',
+        ]);
+
+        $person->delete();
+
+        $person->restore();
+    }                        
 }

@@ -1,3 +1,7 @@
+# v1.5.1
+
+- Swallowing and logging indexing obervables
+
 # v1.5.0
 
 - Reducing slack logging calls
