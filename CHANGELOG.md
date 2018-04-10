@@ -1,3 +1,7 @@
+# v1.5.3
+
+- Force delete now deletes soft-deletable models from the index as it should have.
+
 # v1.5.2
 
 - Removed logging for single document indexing, too noisy.
