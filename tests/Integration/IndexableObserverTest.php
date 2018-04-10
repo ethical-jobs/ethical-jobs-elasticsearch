@@ -6,6 +6,7 @@ use Mockery;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Tests\Fixtures;
+use EthicalJobs\Elasticsearch\Utilities;
 use EthicalJobs\Elasticsearch\Indexing\Indexer;
 
 class IndexableObserverTest extends \Tests\TestCase
@@ -132,6 +133,37 @@ class IndexableObserverTest extends \Tests\TestCase
         ]);
 
         $family->delete();
+    }       
+
+    /**
+     * @test
+     * @group Integration
+     */
+    public function it_deletes_soft_deleteables_when_force_deleting()
+    {
+        $indexer = Mockery::mock(Indexer::class)
+            ->shouldReceive('indexDocument')
+            ->once()
+            ->withAnyArgs()
+            ->andReturn([])
+            ->shouldReceive('deleteDocument')
+            ->once()
+            ->withArgs(function($family) {
+                $this->assertEquals('Andrew', $family->first_name);
+                return true;
+            })
+            ->andReturn([])            
+            ->getMock();
+
+        App::instance(Indexer::class, $indexer);
+
+        $person = factory(Fixtures\Person::class)->create([
+            'first_name' => 'Andrew',
+        ]);
+
+        $this->assertTrue(Utilities::isSoftDeletable($person));
+
+        $person->forceDelete();
     }       
 
     /**

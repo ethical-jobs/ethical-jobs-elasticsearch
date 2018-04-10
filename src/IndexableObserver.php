@@ -64,7 +64,7 @@ class IndexableObserver
      */
     public function deleted(Model $indexable)
     {
-        if (Utilities::isSoftDeletable($indexable)) { 
+        if (Utilities::isSoftDeletable($indexable) && !$indexable->isForceDeleting()) {
             $this->indexDocument($indexable); 
         } else {
             $this->deleteDocument($indexable);   
